@@ -159,8 +159,6 @@ public function update(UpdateOrderRequest $request,OrderService $orderService, O
 
 
 
-
-
     /**
      * Remove the specified resource from storage.
      */
