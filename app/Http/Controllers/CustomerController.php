@@ -14,9 +14,6 @@ class CustomerController extends Controller
      use AuthorizesRequests;
     use ApiResponseTrait;
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
 
