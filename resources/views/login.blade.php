@@ -15,7 +15,7 @@
             <img src="https://laravel.com/img/logomark.min.svg" alt="Laravel Logo" class="w-14 h-14">
         </div>
 
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6"> الدخول</h2>
+        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6"> تسجيل</h2>
 
         <form id="login-form" class="space-y-4">
             <div>
