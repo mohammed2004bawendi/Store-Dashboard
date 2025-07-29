@@ -65,7 +65,7 @@ class OrderController extends Controller
 
      public function showOne(Order $order)
 {
-     Gate::authorize('view', $order);
+     $this->authorize('view', $order);
 
     $order->with(['products', 'customer']);
 
@@ -125,7 +125,7 @@ public function showPage(Order $order)
 
         $query = $order->products()->when($request->search, fn($q, $search) => $q->where('name', 'like', '%'. $search . '%' ));
 
-        Gate::authorize('view', $order);
+        $this->authorize('view', $order);
 
 
         return ProductResource::collection($query->get());
