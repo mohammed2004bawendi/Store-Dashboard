@@ -6,13 +6,18 @@ use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-        use App\Traits\ApiResponseTrait;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
 
 
 class ProductController extends Controller
 {
 
-             use ApiResponseTrait;
+
+
+    use AuthorizesRequests;
+    use ApiResponseTrait;
 
     /**
      * Display a listing of the resource.
@@ -45,7 +50,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        Gate::authorize('create', Product::class);
+        $this->authorize('create', Product::class);
 
         $data = $request->validate([
             'name' => 'required',
@@ -66,7 +71,7 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        Gate::authorize('view', $product);
+        $this->authorize('view', $product);
         return new ProductResource($product);
     }
 
@@ -83,7 +88,7 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
-        Gate::authorize('update', $product);
+        $this->authorize('update', $product);
 
         $product->update([
              ...$request->validate([
@@ -102,14 +107,14 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        Gate::authorize('delete', $product);
+        $this->authorize('delete', $product);
         $product->delete();
         return $this->success([], 'تم حذف المنتج بنجاح');    }
 
 
     public function buyersCount(Product $product)
 {
-    Gate::authorize('view', $product);
+    $this->authorize('view', $product);
 
     $customerCount = $product->orders()
         ->distinct('customer_id')
