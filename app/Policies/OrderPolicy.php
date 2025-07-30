@@ -2,20 +2,26 @@
 
 namespace App\Policies;
 
-use App\Models\Customer;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
-use Pest\ArchPresets\Custom;
 
 class OrderPolicy
 {
+    /**
+     * Check if user has one of the allowed roles.
+     */
+    private function hasRole(User $user, array $roles): bool
+    {
+        return in_array($user->role, $roles);
+    }
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $this->hasRole($user, ['admin', 'support']);
     }
 
     /**
@@ -23,10 +29,9 @@ class OrderPolicy
      */
     public function view(User $user, Order $order): Response
     {
-
-        return in_array($user->role, ['admin', 'support'])
-                ? Response::allow()
-                : Response::deny('You can not show the order');
+        return $this->hasRole($user, ['admin', 'support'])
+            ? Response::allow()
+            : Response::deny('You cannot view this order.');
     }
 
     /**
@@ -34,26 +39,19 @@ class OrderPolicy
      */
     public function create(User $user): Response
     {
-        return in_array($user->role, ['admin', 'support'])
-                ? Response::allow()
-                : Response::deny('You can not creat a new order');
+        return $this->hasRole($user, ['admin', 'support'])
+            ? Response::allow()
+            : Response::deny('You cannot create a new order.');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-
-    /* public function update(User $user, Post $post): Response
-{
-    return $user->id === $post->user_id
-        ? Response::allow()
-        : Response::deny('You do not own this post.');
-}*/
     public function update(User $user, Order $order): Response
     {
-        return in_array($user->role, ['admin', 'product_manager', 'support'])
-                ? Response::allow()
-                : Response::deny('You can not edit the order');
+        return $this->hasRole($user, ['admin', 'product_manager', 'support'])
+            ? Response::allow()
+            : Response::deny('You cannot update this order.');
     }
 
     /**
@@ -61,10 +59,9 @@ class OrderPolicy
      */
     public function delete(User $user, Order $order): Response
     {
-
-        return in_array($user->role, ['admin', 'support'])
-                ? Response::allow()
-                : Response::deny('You can not delete this order');
+        return $this->hasRole($user, ['admin', 'support'])
+            ? Response::allow()
+            : Response::deny('You cannot delete this order.');
     }
 
     /**

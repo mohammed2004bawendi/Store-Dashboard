@@ -9,11 +9,19 @@ use Illuminate\Auth\Access\Response;
 class ProductPolicy
 {
     /**
+     * Check if user has one of the allowed roles.
+     */
+    private function hasRole(User $user, array $roles): bool
+    {
+        return in_array($user->role, $roles);
+    }
+
+    /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $this->hasRole($user, ['admin', 'support', 'product_manager']);
     }
 
     /**
@@ -21,9 +29,9 @@ class ProductPolicy
      */
     public function view(User $user, Product $product): Response
     {
-        return in_array($user->role, ['admin', 'support', 'product_manager'])
-                ? Response::allow()
-                : Response::deny('You can not show the product');
+        return $this->hasRole($user, ['admin', 'support', 'product_manager'])
+            ? Response::allow()
+            : Response::deny('You cannot view this product.');
     }
 
     /**
@@ -31,9 +39,9 @@ class ProductPolicy
      */
     public function create(User $user): Response
     {
-        return in_array($user->role, ['admin', 'product_manager'])
-                ? Response::allow()
-                : Response::deny('You can not create a new product');
+        return $this->hasRole($user, ['admin', 'product_manager'])
+            ? Response::allow()
+            : Response::deny('You cannot create a new product.');
     }
 
     /**
@@ -41,9 +49,9 @@ class ProductPolicy
      */
     public function update(User $user, Product $product): Response
     {
-        return in_array($user->role, ['admin', 'product_manager'])
-                ? Response::allow()
-                : Response::deny('You can not update a new product');
+        return $this->hasRole($user, ['admin', 'product_manager'])
+            ? Response::allow()
+            : Response::deny('You cannot update this product.');
     }
 
     /**
@@ -51,22 +59,16 @@ class ProductPolicy
      */
     public function delete(User $user, Product $product): Response
     {
-        return in_array($user->role, ['admin', 'product_manager'])
-                ? Response::allow()
-                : Response::deny('You can not delete a new product');
+        return $this->hasRole($user, ['admin', 'product_manager'])
+            ? Response::allow()
+            : Response::deny('You cannot delete this product.');
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
     public function restore(User $user, Product $product): bool
     {
         return false;
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
     public function forceDelete(User $user, Product $product): bool
     {
         return false;
