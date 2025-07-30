@@ -8,97 +8,62 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Traits\ApiResponseTrait;
 use Pest\ArchPresets\Custom;
+use App\Http\Requests\StoreCustomerRequest;
+use App\Http\Requests\UpdateCustomerRequest;
+
 
 class CustomerController extends Controller
 {
-     use AuthorizesRequests;
-    use ApiResponseTrait;
+    use AuthorizesRequests, ApiResponseTrait;
 
     public function index(Request $request)
     {
-
         Gate::authorize('view-customers');
 
-        $query = Customer::query();
-        $query->when($request->search, fn($q, $search) => $q->where('name', 'like', '%'. $search . '%' ));
-        $query->when($request->phone, fn($q, $search) => $q->where('phone', 'like', '%'. $search . '%' ));
+        $query = $this->applyFilters(Customer::query(), $request);
+
         return CustomerResource::collection($query->paginate());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    private function applyFilters($query, Request $request)
     {
-
+        return $query
+            ->when($request->search, fn($q, $val) => $q->where('name', 'like', "%$val%"))
+            ->when($request->phone, fn($q, $val) => $q->where('phone', 'like', "%$val%"));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreCustomerRequest $request)
     {
-
         $this->authorize('create', Customer::class);
 
-        $customer = Customer::create(
-            $request->validate([
-                'name' => 'required',
-                'phone' => 'required|string',
-                'address' => 'required',
-            ])
-            );
-
-            return new CustomerResource($customer);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Customer $customer)
-    {
-           $this->authorize('view', $customer);
-             return new CustomerResource($customer);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Customer $customer)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Customer $customer)
-    {
-
-
-
-
-       $this->authorize('update', $customer);
-
-        $customer->update(
-            $request->validate([
-                'name' => 'required',
-                'phone' => 'required|string',
-                'address' => 'required',
-            ])
-            );
+        $customer = Customer::create($request->validated());
 
         return new CustomerResource($customer);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+    public function show(Customer $customer)
+    {
+        $this->authorize('view', $customer);
+
+        return new CustomerResource($customer);
+    }
+
+    public function update(UpdateCustomerRequest $request, Customer $customer)
+    {
+        $this->authorize('update', $customer);
+
+        $customer->update($request->validated());
+
+        return new CustomerResource($customer);
+    }
+
     public function destroy(Customer $customer)
     {
-       $this->authorize('delete', $customer);
+        $this->authorize('delete', $customer);
 
         $customer->delete();
-        return response()->json(['message'=>'Customer deleted successfully!'], 200);
+
+        return $this->success([], 'تم حذف العميل');
     }
 }
+
