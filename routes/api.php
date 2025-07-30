@@ -17,40 +17,42 @@ use App\Http\Controllers\DashboardController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
-
 Route::middleware('auth:sanctum')->group(function () {
+
     Route::get('/user', function (Request $request) {
-    $user = $request->user();
-
-    return response()->json([
-        'id' => $user->id,
-        'name' => $user->name,
-        'email' => $user->email,
-        'role' => $user->role
-    ]);
-});
-
+        $user = $request->user();
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role
+        ]);
+    });
 
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    // Customers & Orders
     Route::apiResource('customers', CustomerController::class);
     Route::apiResource('customers.orders', OrderController::class);
+
+    // Products
     Route::apiResource('products', ProductController::class);
-
     Route::get('/products/{product}/buyers-count', [ProductController::class, 'buyersCount']);
-    Route::get('/dashboard', [DashboardController::class, 'data']);
 
-    Route::get('/orders/export', [OrderController::class, 'export']);
-    Route::post('/orders', [OrderController::class, 'store']);
+    // Orders (Global)
     Route::get('/orders', [OrderController::class, 'indexall']);
     Route::get('/orders/{order}', [OrderController::class, 'showOne']);
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::put('/orders/{order}', [OrderController::class, 'update']);
+    Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
+
+    // Custom
+    Route::get('/orders/export', [OrderController::class, 'export']);
     Route::get('/orders/{order}/invoice', [OrderController::class, 'downloadInvoice'])->name('orders.invoice');
 
-    Route::delete('/orders/{order}', [OrderController::class, 'destroy']);
-    Route::put('/orders/{order}', [OrderController::class, 'update']);
-
-
-
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'data']);
 });
+
 
 

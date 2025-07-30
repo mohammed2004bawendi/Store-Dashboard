@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
@@ -9,118 +11,72 @@ use Illuminate\Support\Facades\Gate;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
-
-
 class ProductController extends Controller
 {
+    use AuthorizesRequests, ApiResponseTrait;
 
-
-
-    use AuthorizesRequests;
-    use ApiResponseTrait;
-
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
-
         Gate::authorize('view-products');
 
-        $query = Product::query();
-
-        $query->when($request->status, fn($q, $status) => $q->where('status', $status));
-        $query->when($request->min_quantity, fn($q, $min) => $q->where('quantity', '>=', $min));
-        $query->when($request->max_quantity, fn($q, $max) => $q->where('quantity', '<=', $max));
-        $query->when($request->min_price, fn($q, $min) => $q->where('price', '>=', $min));
-        $query->when($request->max_price, fn($q, $max) => $q->where('price', '<=', $max));
-        $query->when($request->search, fn($q, $search) => $q->where('name', 'like', '%'. $search . '%' ));
+        $query = $this->applyFilters(Product::query(), $request);
 
         return ProductResource::collection($query->paginate());
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
+    private function applyFilters($query, Request $request)
+    {
+        return $query
+            ->when($request->status, fn($q, $val) => $q->where('status', $val))
+            ->when($request->min_quantity, fn($q, $val) => $q->where('quantity', '>=', $val))
+            ->when($request->max_quantity, fn($q, $val) => $q->where('quantity', '<=', $val))
+            ->when($request->min_price, fn($q, $val) => $q->where('price', '>=', $val))
+            ->when($request->max_price, fn($q, $val) => $q->where('price', '<=', $val))
+            ->when($request->search, fn($q, $val) => $q->where('name', 'like', "%$val%"));
+    }
 
-
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
         $this->authorize('create', Product::class);
 
-        $data = $request->validate([
-            'name' => 'required',
-            'description' => 'required',
-            'price' => 'required|integer',
-            'quantity' => 'required|integer',
-            'status' => 'required'
-        ]);
+        $product = Product::create($request->validated());
 
-        $product = Product::create($data);
-
-
-        return $this->success([], 'تم إنشاء المنتج بنجاح');
+        return $this->success(['id' => $product->id], 'تم إنشاء المنتج بنجاح');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Product $product)
     {
         $this->authorize('view', $product);
+
         return new ProductResource($product);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
         $this->authorize('update', $product);
 
-        $product->update([
-             ...$request->validate([
-                'name' => 'required',
-                'description' => 'required',
-                'price' => 'required|integer',
-                'quantity' => 'required|integer',
-                'status' => 'required'
-            ])
-            ]);
+        $product->update($request->validated());
 
-        return $this->success([], 'تم نحديث المنتج بنجاح');    }
+        return $this->success(['id' => $product->id], 'تم تحديث المنتج بنجاح');
+    }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Product $product)
     {
         $this->authorize('delete', $product);
+
         $product->delete();
-        return $this->success([], 'تم حذف المنتج بنجاح');    }
 
+        return $this->success([], 'تم حذف المنتج بنجاح');
+    }
 
-    public function buyersCount(Product $product)
-{
-    $this->authorize('view', $product);
+    public function customerCount(Product $product)
+    {
+        $this->authorize('view', $product);
 
-    $customerCount = $product->orders()
-        ->distinct('customer_id')
-        ->count('customer_id');
+        $count = $product->orders()
+            ->distinct('customer_id')
+            ->count('customer_id');
 
-    return response()->json(['count' => $customerCount]);
-}
-
+        return response()->json(['count' => $count]);
+    }
 }
