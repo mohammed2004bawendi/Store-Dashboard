@@ -37,7 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Products
     Route::apiResource('products', ProductController::class);
-    Route::get('/products/{product}/buyers-count', [ProductController::class, 'buyersCount']);
+    Route::get('/products/{product}/buyers-count', [ProductController::class, 'customerCount']);
 
     // Orders (Global)
     Route::get('/orders', [OrderController::class, 'indexall']);

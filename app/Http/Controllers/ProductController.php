@@ -6,10 +6,15 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Traits\ApiResponseTrait;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\quantityReminder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Notifications\ProductAlmostOut;
+
 
 class ProductController extends Controller
 {
@@ -22,6 +27,8 @@ class ProductController extends Controller
         $query = $this->applyFilters(Product::query(), $request);
 
         return ProductResource::collection($query->paginate());
+
+
     }
 
     private function applyFilters($query, Request $request)
@@ -56,6 +63,12 @@ class ProductController extends Controller
         $this->authorize('update', $product);
 
         $product->update($request->validated());
+
+        if ($product->quantity < 2) {
+                $users = User::all();
+                 Notification::send($users, new quantityReminder($product));
+            }
+
 
         return $this->success(['id' => $product->id], 'تم تحديث المنتج بنجاح');
     }

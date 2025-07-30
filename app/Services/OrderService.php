@@ -5,11 +5,20 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Customer;
+use App\Models\User;
+use App\Notifications\quantityReminder;
 use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Notification;
+
+
 
 class OrderService
 {
+
+        use Notifiable;
+
     public function create(array $data): void
     {
         DB::transaction(function () use ($data) {
@@ -72,6 +81,11 @@ class OrderService
 
             if ($product->quantity < $quantity) {
                 throw new Exception("الكمية المطلوبة من المنتج {$product->name} غير متوفرة.");
+            }
+
+            if ($product->quantity < 2) {
+                $users = User::all();
+                 Notification::send($users, new quantityReminder($product));
             }
 
             $order->products()->attach($product->id, [
