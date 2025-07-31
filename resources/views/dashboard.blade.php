@@ -3,7 +3,6 @@
 @section('title', 'لوحة التحكم')
 
 @section('content')
-<!-- ✅ الرأس -->
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
         <i data-lucide="layout-dashboard" class="w-6 h-6 text-blue-600"></i>
@@ -11,7 +10,6 @@
     </h1>
 </div>
 
-<!-- ✅ الإحصائيات -->
 <div id="stats" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white p-4 rounded-lg shadow flex items-center gap-4">
         <i data-lucide="users" class="w-8 h-8 text-blue-500"></i>
@@ -36,7 +34,6 @@
     </div>
 </div>
 
-<!-- ✅ الرسوم البيانية -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div class="bg-white p-6 rounded-lg shadow">
         <h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center gap-2">
@@ -59,7 +56,7 @@
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://unpkg.com/lucide@latest"></script> <!-- ✅ أيقونات Lucide -->
+<script src="https://unpkg.com/lucide@latest"></script> 
 <script>
 
     async function fetchDashboard() {
@@ -138,7 +135,6 @@
 
     fetchDashboard();
 
-    // ✅ تفعيل الأيقونات
     lucide.createIcons();
 </script>
 @endsection

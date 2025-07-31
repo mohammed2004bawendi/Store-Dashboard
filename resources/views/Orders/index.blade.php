@@ -28,14 +28,12 @@
 </div>
 
 
-<!-- ✅ نموذج إنشاء طلبية -->
 <div id="create-order-form" class="bg-white p-4 rounded shadow mb-6 hidden">
     <h3 class="text-lg font-bold text-gray-800 mb-4">طلبية جديدة</h3>
     <form onsubmit="createOrder(event)" class="space-y-3">
         <input type="text" id="c-name" placeholder="الاسم" class="w-full rounded border px-3 py-2" required>
         <input type="text" id="c-phone" placeholder="الهاتف" class="w-full rounded border px-3 py-2" required>
         <input type="text" id="c-address" placeholder="العنوان" class="w-full rounded border px-3 py-2" required>
-        <!-- ✅ الحالة -->
 <div>
     <label for="status" class="block mb-1 font-semibold text-sm text-gray-700">الحالة</label>
     <select id="status" class="w-full rounded border px-3 py-2">
@@ -45,8 +43,7 @@
     </select>
 </div>
 
-        <!-- ✅ إدخال المنتجات بشكل ديناميكي -->
-<!-- ✅ إدخال المنتجات -->
+
 <div class="space-y-2 mt-4">
     <label class="block text-sm font-semibold text-gray-700 mb-1">إضافة منتج</label>
     <div class="flex gap-2">
@@ -61,11 +58,9 @@
         </button>
     </div>
 
-    <!-- ✅ المنتجات المضافة -->
     <div id="products-list" class="flex flex-wrap gap-2 mt-2"></div>
 </div>
 
-<!-- ✅ أزرار الحفظ والإلغاء -->
 <div class="flex justify-start gap-3 mt-6">
     <button type="submit"
             class="bg-green-600 hover:bg-green-700 transition text-white text-sm px-6 py-2 rounded flex items-center gap-1">
@@ -82,7 +77,6 @@
     </form>
 </div>
 
-<!-- ✅ بحث وفلترة مع أيقونة بحث رسمية -->
 <div class="flex flex-col md:flex-row items-center gap-4 mb-6 bg-white p-4 rounded shadow">
     <div class="relative w-full md:w-1/2">
         <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
@@ -113,12 +107,10 @@
 </div>
 
 
-<!-- 🧾 نتائج الطلبات -->
 <div id="order-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <p class="col-span-full text-gray-500">جارٍ تحميل الطلبات...</p>
 </div>
 
-<!-- ✅ الترقيم -->
 <div id="pagination" class="mt-6 flex justify-center gap-2"></div>
 @endsection
 
@@ -175,7 +167,6 @@ async function loadOrders(page = 1) {
         const data = await response.json();
         if (!response.ok || !data.data) throw new Error("Unauthorized");
 
-  // ✅ تحديث التجميع
         document.getElementById("orders-count-text").innerText = `عدد الطلبات: ${data.meta.total_orders}`;
         document.getElementById("orders-total-text").innerText = `الإجمالي: ${data.meta.total_amount.toLocaleString()} د.ل`;
 
@@ -276,7 +267,6 @@ function addProduct() {
         return Swal.fire("خطأ", "أدخل ID صحيح وكمية أكبر من 0", "warning");
     }
 
-    // تحقق إن كان المنتج مضاف مسبقًا
     const exists = products.find(p => p.id === id);
     if (exists) {
         exists.quantity += qty;

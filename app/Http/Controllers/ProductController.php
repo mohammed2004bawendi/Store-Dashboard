@@ -64,7 +64,7 @@ class ProductController extends Controller
 
         $product->update($request->validated());
 
-        if ($product->quantity < 2) {
+        if ($product->quantity < 2 && $product->quantity >= 0) {
                 $users = User::all();
                  Notification::send($users, new quantityReminder($product));
             }

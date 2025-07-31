@@ -35,7 +35,6 @@ Route::get('/products', function () {
 
 
 Route::get('/products/{id}', function ($id) {
-    // فقط اعرض الصفحة، كل البيانات تُجلب عبر JavaScript
     return view('products.show');
 })->where('id', '[0-9]+')->name('products.show');
 

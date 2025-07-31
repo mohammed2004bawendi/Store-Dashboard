@@ -7,6 +7,8 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\QuantityReminderController;
+use App\Models\quantityReminder;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,6 +54,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'data']);
+
+
+    //Notifications
+
+    Route::get('/notifications', [QuantityReminderController::class, 'index']);
+    Route::post('/notifications/{id}/read', [QuantityReminderController::class, 'markAsRead']);
 });
 
 

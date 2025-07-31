@@ -83,7 +83,7 @@ class OrderService
                 throw new Exception("الكمية المطلوبة من المنتج {$product->name} غير متوفرة.");
             }
 
-            if ($product->quantity < 2) {
+            if ($product->quantity < 2 && $product->quantity >= 0) {
                 $users = User::all();
                  Notification::send($users, new quantityReminder($product));
             }

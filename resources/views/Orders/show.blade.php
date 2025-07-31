@@ -6,42 +6,35 @@
 <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
     <h2 class="text-2xl font-bold text-gray-800 mb-8 border-b pb-4 text-center">تفاصيل الطلب</h2>
 
-    <!-- تفاصيل الطلب -->
     <div id="order-details">
         <p class="text-gray-500 text-center">جارٍ تحميل بيانات الطلب...</p>
     </div>
 
-    <!-- أزرار التحكم -->
 
 
 
 
 <div class="mt-10 flex flex-col sm:flex-row justify-between items-center gap-3">
-    <!-- زر الرجوع -->
     <a href="/orders"
        class="bg-blue-600 text-white text-sm px-6 py-2 rounded-lg hover:bg-blue-700 transition w-40 text-center flex items-center justify-center gap-2">
         <i data-lucide="arrow-right-circle" class="w-4 h-4"></i> الرجوع
     </a>
 
-    <!-- زر حفظ -->
     <button id="save-btn" onclick="saveChanges()"
         class="hidden bg-green-600 text-white text-sm px-6 py-2 rounded-lg hover:bg-green-700 transition w-40 flex items-center justify-center gap-2">
         <i data-lucide="folder-check" class="w-4 h-4"></i> حفظ التعديلات
     </button>
 
-    <!-- زر تعديل -->
     <button id="edit-btn" onclick="enableEditing()"
         class="bg-yellow-500 text-white text-sm px-6 py-2 rounded-lg hover:bg-yellow-600 transition w-40 flex items-center justify-center gap-2">
         <i data-lucide="pencil-line" class="w-4 h-4"></i> تعديل
     </button>
 
-    <!-- زر حذف -->
     <button onclick="confirmDelete()"
         class="bg-red-600 text-white text-sm px-6 py-2 rounded-lg hover:bg-red-700 transition w-40 flex items-center justify-center gap-2">
         <i data-lucide="trash-2" class="w-4 h-4"></i> حذف
     </button>
 
-    <!-- زر تحميل الفاتورة -->
     <button id="download-btn" data-id="{{ $order->id }}"
         class="bg-indigo-600 text-white text-sm px-6 py-2 rounded-lg hover:bg-indigo-700 transition w-40 flex items-center justify-center gap-2">
         <i data-lucide="file-down" class="w-4 h-4"></i> تحميل الفاتورة
@@ -50,7 +43,6 @@
 
 </div>
 
-<!-- مودال تأكيد الحذف -->
 <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg p-6 w-80 text-center">
         <h3 class="text-lg font-bold mb-4 text-gray-800">هل أنت متأكد؟</h3>

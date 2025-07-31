@@ -48,7 +48,7 @@ class quantityReminder extends Notification
     public function toDatabase($notifiable)
 {
     return [
-        'title' => 'منتج على وشك النفاد',
+        'title' => $this->product->quantity == 1 ? "الكمية على وشك النفاد" : "الكمية نفدت" ,
         'product_id' => $this->product->id,
         'product_name' => $this->product->name,
         'quantity' => $this->product->quantity,

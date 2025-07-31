@@ -65,7 +65,6 @@
     </form>
 </div>
 
-<!-- 🔎 أدوات الفلترة -->
 <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 bg-white p-4 rounded shadow">
     <div class="relative w-full md:w">
         <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
@@ -83,17 +82,13 @@
     <input type="number" id="max_price" placeholder="أعلى سعر" class="border rounded px-3 py-2 col-span-1">
 </div>
 
-<!-- 🧾 نتائج المنتجات -->
 <div id="product-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <p class="col-span-full text-gray-500">جارٍ تحميل المنتجات...</p>
 </div>
 
-<!-- ✅ الترقيم -->
 <div id="pagination" class="mt-6 flex justify-center gap-2"></div>
-<!-- ✅ إشعار وسط الشاشة -->
 <div id="popup-overlay" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
     <div id="popup-message" class="text-center px-8 py-6 rounded-lg shadow-lg text-lg font-semibold max-w-sm w-full animate-fadeInUp">
-        <!-- الرسالة ستظهر هنا -->
     </div>
 </div>
 
@@ -115,7 +110,7 @@ function showPopup(message, type = 'success') {
 
     setTimeout(() => {
         overlay.classList.add("hidden");
-    }, 5000); // يغلق بعد 3 ثوانٍ
+    }, 5000); 
 }
 
 

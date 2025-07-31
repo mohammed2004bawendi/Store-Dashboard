@@ -6,12 +6,10 @@
 <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
     <h2 class="text-2xl font-bold text-gray-800 mb-8 border-b pb-4 text-center">تفاصيل المنتج</h2>
 
-    <!-- تفاصيل المنتج -->
     <div id="product-details">
         <p class="text-gray-500 text-center">جارٍ تحميل بيانات المنتج...</p>
     </div>
 
-    <!-- أزرار التحكم -->
     <div class="mt-10 flex flex-col sm:flex-row justify-between items-center gap-4">
         <a href="/products"
            class="bg-blue-600 text-white text-sm px-6 py-2 rounded-md hover:bg-blue-700 transition w-40 text-center flex justify-center items-center gap-2">
@@ -35,7 +33,6 @@
     </div>
 </div>
 
-<!-- مودال تأكيد الحذف -->
 <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg p-6 w-80 text-center">
         <h3 class="text-lg font-bold mb-4 text-gray-800">هل أنت متأكد؟</h3>
