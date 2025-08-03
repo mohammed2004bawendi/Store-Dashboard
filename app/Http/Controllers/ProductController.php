@@ -15,11 +15,11 @@ use App\Notifications\quantityReminder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Notifications\ProductAlmostOut;
 
-
 class ProductController extends Controller
 {
     use AuthorizesRequests, ApiResponseTrait;
 
+    // List products with filters
     public function index(Request $request)
     {
         Gate::authorize('view-products');
@@ -27,10 +27,9 @@ class ProductController extends Controller
         $query = $this->applyFilters(Product::query(), $request);
 
         return ProductResource::collection($query->paginate());
-
-
     }
 
+    // Apply filters to product query
     private function applyFilters($query, Request $request)
     {
         return $query
@@ -42,6 +41,7 @@ class ProductController extends Controller
             ->when($request->search, fn($q, $val) => $q->where('name', 'like', "%$val%"));
     }
 
+    // Create new product
     public function store(StoreProductRequest $request)
     {
         $this->authorize('create', Product::class);
@@ -51,6 +51,7 @@ class ProductController extends Controller
         return $this->success(['id' => $product->id], 'تم إنشاء المنتج بنجاح');
     }
 
+    // Show single product
     public function show(Product $product)
     {
         $this->authorize('view', $product);
@@ -58,21 +59,23 @@ class ProductController extends Controller
         return new ProductResource($product);
     }
 
+    // Update product and notify if quantity is low
     public function update(UpdateProductRequest $request, Product $product)
     {
         $this->authorize('update', $product);
 
         $product->update($request->validated());
 
+        // Notify users if quantity is less than 2
         if ($product->quantity < 2 && $product->quantity >= 0) {
-                $users = User::all();
-                 Notification::send($users, new quantityReminder($product));
-            }
-
+            $users = User::all();
+            Notification::send($users, new quantityReminder($product));
+        }
 
         return $this->success(['id' => $product->id], 'تم تحديث المنتج بنجاح');
     }
 
+    // Delete product
     public function destroy(Product $product)
     {
         $this->authorize('delete', $product);
@@ -82,6 +85,7 @@ class ProductController extends Controller
         return $this->success([], 'تم حذف المنتج بنجاح');
     }
 
+    // Count distinct customers who ordered this product
     public function customerCount(Product $product)
     {
         $this->authorize('view', $product);

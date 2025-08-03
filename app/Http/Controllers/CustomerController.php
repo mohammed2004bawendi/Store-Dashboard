@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Http\Resources\CustomerResource;
 use App\Models\Customer;
 use Illuminate\Http\Request;
@@ -11,11 +12,11 @@ use Pest\ArchPresets\Custom;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 
-
 class CustomerController extends Controller
 {
     use AuthorizesRequests, ApiResponseTrait;
 
+    // List customers with filters
     public function index(Request $request)
     {
         Gate::authorize('view-customers');
@@ -25,6 +26,7 @@ class CustomerController extends Controller
         return CustomerResource::collection($query->paginate());
     }
 
+    // Filter by name or phone
     private function applyFilters($query, Request $request)
     {
         return $query
@@ -32,6 +34,7 @@ class CustomerController extends Controller
             ->when($request->phone, fn($q, $val) => $q->where('phone', 'like', "%$val%"));
     }
 
+    // Create customer
     public function store(StoreCustomerRequest $request)
     {
         $this->authorize('create', Customer::class);
@@ -41,6 +44,7 @@ class CustomerController extends Controller
         return new CustomerResource($customer);
     }
 
+    // Show customer
     public function show(Customer $customer)
     {
         $this->authorize('view', $customer);
@@ -48,6 +52,7 @@ class CustomerController extends Controller
         return new CustomerResource($customer);
     }
 
+    // Update customer
     public function update(UpdateCustomerRequest $request, Customer $customer)
     {
         $this->authorize('update', $customer);
@@ -57,6 +62,7 @@ class CustomerController extends Controller
         return new CustomerResource($customer);
     }
 
+    // Delete customer
     public function destroy(Customer $customer)
     {
         $this->authorize('delete', $customer);
@@ -66,4 +72,3 @@ class CustomerController extends Controller
         return $this->success([], 'تم حذف العميل');
     }
 }
-

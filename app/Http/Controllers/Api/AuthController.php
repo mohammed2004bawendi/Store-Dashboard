@@ -8,38 +8,41 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-// ...
-
-
-
 class AuthController extends Controller
 {
+    // Login method
     public function login(Request $request) {
+        // Validate request input
         $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
 
-    $user = User::where('email', $request->email)->first();
+        // Find user by email
+        $user = User::where('email', $request->email)->first();
 
-if (!$user || !Hash::check($request->password, $user->password)) {
-    throw ValidationException::withMessages([
-        'email' => ['The provided credentials are incorrect.']
-    ]);
-}
+        // Check if user exists and password is correct
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.']
+            ]);
+        }
 
+        // Create API token for the user
+        $token = $user->createToken('api-token')->plainTextToken;
 
-    $token = $user->createToken('api-token')->plainTextToken;
-
-    return response()->json([
-        'token' => $token
-    ]);
-
+        // Return token in JSON response
+        return response()->json([
+            'token' => $token
+        ]);
     }
 
+    // Logout method
     public function logout(Request $request) {
+        // Delete all tokens for the authenticated user
         $request->user()->tokens()->delete();
 
+        // Return logout confirmation message
         return response()->json([
             'message' => 'Logged out successfully'
         ]);

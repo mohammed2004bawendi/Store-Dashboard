@@ -12,13 +12,11 @@ use Exception;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Notification;
 
-
-
 class OrderService
 {
+    use Notifiable;
 
-        use Notifiable;
-
+    // Create a new order with customer and products
     public function create(array $data): void
     {
         DB::transaction(function () use ($data) {
@@ -36,6 +34,7 @@ class OrderService
         });
     }
 
+    // Update an existing order and optionally customer/products
     public function update(array $data, Customer $customer, Order $order): void
     {
         DB::transaction(function () use ($data, $customer, $order) {
@@ -60,6 +59,7 @@ class OrderService
         });
     }
 
+    // Create or fetch existing customer by phone
     private function createOrGetCustomer(array $data): Customer
     {
         return Customer::firstOrCreate(
@@ -71,6 +71,7 @@ class OrderService
         );
     }
 
+    // Attach products to order and calculate total
     private function attachProductsAndCalculateTotal(Order $order, array $products): float
     {
         $total = 0;
@@ -79,27 +80,33 @@ class OrderService
             $product = Product::findOrFail($item['id']);
             $quantity = $item['quantity'];
 
+            // Check stock
             if ($product->quantity < $quantity) {
                 throw new Exception("الكمية المطلوبة من المنتج {$product->name} غير متوفرة.");
             }
 
+            // Notify if stock is low
             if ($product->quantity < 2 && $product->quantity >= 0) {
                 $users = User::all();
-                 Notification::send($users, new quantityReminder($product));
+                Notification::send($users, new quantityReminder($product));
             }
 
+            // Attach product to order with pivot data
             $order->products()->attach($product->id, [
                 'quantity' => $quantity,
                 'price' => $product->price
             ]);
 
+            // Decrease stock
             $product->decrement('quantity', $quantity);
+
             $total += $quantity * $product->price;
         }
 
         return $total;
     }
 
+    // Restore quantities when removing products from order
     private function restoreProductQuantities(Order $order): void
     {
         foreach ($order->products as $product) {
@@ -107,6 +114,7 @@ class OrderService
         }
     }
 
+    // Update customer information
     private function updateCustomerInfo(Customer $customer, array $data): void
     {
         $customer->update([

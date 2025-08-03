@@ -6,22 +6,21 @@ use App\Models\quantityReminder;
 use Illuminate\Http\Request;
 use App\Models\User;
 
-
 class QuantityReminderController extends Controller
 {
-
-    
     /**
-     * Display a listing of the resource.
+     * Get all notifications for the authenticated user.
      */
     public function index(Request $request)
     {
-
         return response()->json([
-        'notifications' => $request->user()->notifications()->latest()->get()
-    ]);
+            'notifications' => $request->user()->notifications()->latest()->get()
+        ]);
     }
 
+    /**
+     * Mark specific notification as read.
+     */
     public function markAsRead(Request $request, $id)
     {
         $notification = $request->user()->notifications()->findOrFail($id);
@@ -31,17 +30,15 @@ class QuantityReminderController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Not implemented: Show form to create a resource.
      */
     public function create()
     {
         //
     }
 
-
-
     /**
-     * Store a newly created resource in storage.
+     * Not implemented: Store a newly created resource.
      */
     public function store(Request $request)
     {
@@ -49,7 +46,7 @@ class QuantityReminderController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Not implemented: Display a specific resource.
      */
     public function show(quantityReminder $quantityReminder)
     {
@@ -57,7 +54,7 @@ class QuantityReminderController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Not implemented: Show form to edit a resource.
      */
     public function edit(quantityReminder $quantityReminder)
     {
@@ -65,7 +62,7 @@ class QuantityReminderController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Not implemented: Update a resource.
      */
     public function update(Request $request, quantityReminder $quantityReminder)
     {
@@ -73,7 +70,7 @@ class QuantityReminderController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Not implemented: Delete a resource.
      */
     public function destroy(quantityReminder $quantityReminder)
     {

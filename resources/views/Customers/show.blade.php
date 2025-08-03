@@ -12,7 +12,6 @@
         <p class="text-center text-gray-500">جارٍ تحميل بيانات الزبون...</p>
     </div>
 
-    <!-- الطلبات -->
     <div id="orders-section" class="mt-10">
         <h3 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2 flex items-center gap-2">
             <i data-lucide="clipboard-list" class="w-5 h-5 text-gray-600"></i> طلبات الزبون
@@ -22,7 +21,6 @@
         </div>
     </div>
 
-    <!-- أزرار التحكم -->
     <div class="mt-10 flex flex-col sm:flex-row justify-between items-center gap-4">
         <a href="/customers"
            class="bg-blue-600 text-white text-sm px-6 py-2 rounded-md hover:bg-blue-700 transition w-40 text-center flex justify-center items-center gap-2">
@@ -46,7 +44,6 @@
     </div>
 </div>
 
-<!-- مودال تأكيد الحذف -->
 <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg p-6 w-80 text-center">
         <h3 class="text-lg font-bold mb-4 text-gray-800">هل أنت متأكد؟</h3>

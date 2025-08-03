@@ -23,67 +23,61 @@ use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 
-
-
-
-
 class OrderController extends Controller
 {
-
     use AuthorizesRequests;
     use ApiResponseTrait;
-    /**
-     * Display a listing of the resource.
-     */
 
-     public function indexall(Request $request) {
+    /**
+     * Display all orders with filters and meta info.
+     */
+    public function indexall(Request $request) {
         Gate::authorize('view-orders');
 
+        $query = Order::query()->with('customer')->whereHas('customer')->with('products');
 
-       $query = Order::query()->with('customer')->whereHas('customer')->with('products');
-
-       $query->when($request->status, fn($q, $status) => $q->where('status', $status));
+        $query->when($request->status, fn($q, $status) => $q->where('status', $status));
         $query->when($request->min_total_price, fn($q, $min) => $q->where('total_price', '>=', $min));
         $query->when($request->max_total_price, fn($q, $max) => $q->where('total_price', '<=', $max));
         $query->when($request->search, function ($q, $search) {
-          $q->where('id', $search)
-         ->orWhereHas('customer', fn($qc) => $qc->where('name', 'like', "%$search%"));
-});
-
+            $q->where('id', $search)
+              ->orWhereHas('customer', fn($qc) => $qc->where('name', 'like', "%$search%"));
+        });
 
         return OrderResource::collection($query->paginate())->additional([
-    'meta' => [
-        'total_orders' => $query->count(),
-        'total_amount' => $query->sum('total_price'),
-    ]
-]);
+            'meta' => [
+                'total_orders' => $query->count(),
+                'total_amount' => $query->sum('total_price'),
+            ]
+        ]);
+    }
 
+    /**
+     * Show single order with products and customer.
+     */
+    public function showOne(Order $order)
+    {
+        $this->authorize('view', $order);
 
+        $order->with(['products', 'customer']);
 
+        return new OrderResource($order);
+    }
 
-     }
+    /**
+     * Return order view.
+     */
+    public function showPage(Order $order)
+    {
+        return view('Orders.show', compact('order'));
+    }
 
-     public function showOne(Order $order)
-{
-     $this->authorize('view', $order);
-
-    $order->with(['products', 'customer']);
-
-    return new OrderResource($order);
-}
-
-public function showPage(Order $order)
-{
-    return view('Orders.show', compact('order'));
-}
-
-
-
+    /**
+     * List orders for a specific customer with filters.
+     */
     public function index(Customer $customer, Request $request)
     {
-
         Gate::authorize('view-orders');
-
 
         $query = $customer->orders();
 
@@ -95,7 +89,7 @@ public function showPage(Order $order)
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Not implemented: show form for creating a new order.
      */
     public function create()
     {
@@ -103,36 +97,37 @@ public function showPage(Order $order)
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store new order using OrderService.
      */
- public function store(StoreOrderRequest $request, OrderService $orderService)
-{
-    $this->authorize('create', Order::class);
+    public function store(StoreOrderRequest $request, OrderService $orderService)
+    {
+        $this->authorize('create', Order::class);
 
-    $validated = $request->validated();
+        $validated = $request->validated();
 
-    $orderService->create($validated);
+        $orderService->create($validated);
 
-    return $this->success([], 'تم إنشاء الطلب بنجاح');
-
-}
+        return $this->success([], 'تم إنشاء الطلب بنجاح');
+    }
 
     /**
-     * Display the specified resource.
+     * Show products in an order if belongs to the customer.
      */
     public function show(Customer $customer, Order $order, Request $request)
     {
-
-        $query = $order->products()->when($request->search, fn($q, $search) => $q->where('name', 'like', '%'. $search . '%' ));
+        if ($customer->id != $order->customer_id) {
+            return response()->json("هذا الزبون لا يمتلك هذه الطلبية");
+        }
 
         $this->authorize('view', $order);
 
+        $query = $order->products()->when($request->search, fn($q, $search) => $q->where('name', 'like', '%' . $search . '%'));
 
         return ProductResource::collection($query->get());
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Not implemented: show form to edit order.
      */
     public function edit(Order $order)
     {
@@ -140,124 +135,115 @@ public function showPage(Order $order)
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update existing order using OrderService.
      */
-public function update(UpdateOrderRequest $request,OrderService $orderService, Order $order)
-{
-    $this->authorize('update', $order);
+    public function update(UpdateOrderRequest $request, OrderService $orderService, Order $order)
+    {
+        $this->authorize('update', $order);
 
-    $validated = $request->validated();
+        $validated = $request->validated();
 
-    $customer = $order->customer;
+        $customer = $order->customer;
 
-    $orderService->update($validated, $customer, $order);
+        $orderService->update($validated, $customer, $order);
 
-    return $this->success([], 'تم تحديث الطلب بنجاح');
-
-}
-
-
-
+        return $this->success([], 'تم تحديث الطلب بنجاح');
+    }
 
     /**
-     * Remove the specified resource from storage.
+     * Delete order and related data.
      */
     public function destroy(Customer $customer, Order $order)
     {
-
         $this->authorize('delete', $order, $customer);
+
         $this->deleteOrderData($order);
 
-          return $this->success([], 'تم حذف الطلب بنجاح');
-
+        return $this->success([], 'تم حذف الطلب بنجاح');
     }
 
+    /**
+     * Restore product quantities and remove order.
+     */
     public function deleteOrderData(Order $order)
-{
-   foreach($order->products as $product) {
-        $product->increment('quantity', $product->pivot->quantity);
-   }
+    {
+        foreach ($order->products as $product) {
+            $product->increment('quantity', $product->pivot->quantity);
+        }
 
-   $order->products()->detach();
+        $order->products()->detach();
 
-   $order->delete();
-}
+        $order->delete();
+    }
 
-public function export(Request $request)
-{
-    $filename = 'orders_' . now()->timestamp . '.xlsx';
-    $path = storage_path("app/public/{$filename}");
+    /**
+     * Export orders to Excel file.
+     */
+    public function export(Request $request)
+    {
+        $filename = 'orders_' . now()->timestamp . '.xlsx';
+        $path = storage_path("app/public/{$filename}");
 
-     $orders = Order::with('customer')->get();
+        $orders = Order::with('customer')->get();
 
-    SimpleExcelWriter::create($path)
-        ->addRows($orders->map(function ($order) {
+        SimpleExcelWriter::create($path)
+            ->addRows($orders->map(function ($order) {
+                return [
+                    'رقم الطلب' => $order->id,
+                    'العميل' => $order->customer->name ?? '',
+                    'الحالة' => $order->status,
+                    'الإجمالي' => $order->total_price,
+                    'تاريخ الإنشاء' => $order->created_at->format('Y-m-d H:i:s'),
+                ];
+            }));
 
-            return [
-                'رقم الطلب' => $order->id,
-                'العميل' => $order->customer->name??'',
-                'الحالة' => $order->status,
-                'الإجمالي' => $order->total_price,
-                'تاريخ الإنشاء' => $order->created_at->format('Y-m-d H:i:s'),
-            ];
-        })
-    );
+        if ($request->expectsJson()) {
+            return response()->json([
+                'url' => asset('storage/' . $filename)
+            ]);
+        }
 
+        return response()->download($path)->deleteFileAfterSend(true);
+    }
 
-    if ($request->expectsJson()) {
+    /**
+     * Generate and download PDF invoice using mPDF.
+     */
+    public function downloadInvoice(Order $order)
+    {
+        $order->load(['customer', 'products']);
 
-        return response()->json([
-            'url' => asset('storage/' .$filename)
+        $html = view('invoices.order', compact('order'))->render();
+
+        $defaultConfig = (new ConfigVariables())->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
+
+        $defaultFontConfig = (new FontVariables())->getDefaults();
+        $fontData = $defaultFontConfig['fontdata'];
+
+        $mpdf = new Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font_size' => 12,
+            'default_font' => 'amiri',
+            'directionality' => 'rtl',
+            'autoLangToFont' => true,
+            'autoScriptToLang' => true,
+            'fontDir' => array_merge($fontDirs, [
+                resource_path('fonts'),
+            ]),
+            'fontdata' => $fontData + [
+                'amiri' => [
+                    'R' => 'Amiri-Regular.ttf',
+                ],
+            ],
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('', 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="invoice-order-' . $order->id . '.pdf"',
         ]);
     }
-
-
-    return response()->download($path)->deleteFileAfterSend(true);
 }
-
-
-
-
-public function downloadInvoice(Order $order)
-{
-    $order->load(['customer', 'products']);
-
-    $html = view('invoices.order', compact('order'))->render();
-
-    $defaultConfig = (new ConfigVariables())->getDefaults();
-    $fontDirs = $defaultConfig['fontDir'];
-
-    $defaultFontConfig = (new FontVariables())->getDefaults();
-    $fontData = $defaultFontConfig['fontdata'];
-
-    $mpdf = new Mpdf([
-        'mode' => 'utf-8',
-        'format' => 'A4',
-        'default_font_size' => 12,
-        'default_font' => 'amiri',
-        'directionality' => 'rtl',
-        'autoLangToFont' => true,
-        'autoScriptToLang' => true,
-        'fontDir' => array_merge($fontDirs, [
-            resource_path('fonts'),
-        ]),
-        'fontdata' => $fontData + [
-            'amiri' => [
-                'R' => 'Amiri-Regular.ttf',
-            ],
-        ],
-    ]);
-
-    $mpdf->WriteHTML($html);
-
-    return response($mpdf->Output('', 'S'), 200, [
-        'Content-Type' => 'application/pdf',
-        'Content-Disposition' => 'attachment; filename="invoice-order-' . $order->id . '.pdf"',
-    ]);
-}
-
-
-
-}
-
-
