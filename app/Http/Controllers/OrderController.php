@@ -42,11 +42,10 @@ class OrderController extends Controller
         $key = 'orders.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
 
         $query = Cache::remember($key, 60, function () use ($request) {
-    return $this->applyFilters(Order::query()->with('customer')->whereHas('customer')->with('products'), $request);
+        return $this->applyFilters(Order::query()->with('customer')->whereHas('customer')->with('products'), $request);
 });
 
-$orders = $query->paginate();
-
+        $orders = $query->paginate();
 
         return OrderResource::collection($orders)->additional([
             'meta' => [
