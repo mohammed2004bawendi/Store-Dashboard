@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Products
     Route::apiResource('products', ProductController::class);
     Route::get('/products/{product}/buyers-count', [ProductController::class, 'customerCount']);
+   // Route::post('/products/weo', [ProductController::class, 'withCache']);
 
     // Orders (Global)
     Route::get('/orders', [OrderController::class, 'indexall']);

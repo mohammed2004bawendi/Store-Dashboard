@@ -22,6 +22,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
+use Illuminate\Support\Facades\Cache;
 
 class OrderController extends Controller
 {
@@ -31,26 +32,40 @@ class OrderController extends Controller
     /**
      * Display all orders with filters and meta info.
      */
+
+    
+
+
     public function indexall(Request $request) {
         Gate::authorize('view-orders');
 
-        $query = Order::query()->with('customer')->whereHas('customer')->with('products');
+        $key = 'orders.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
 
-        $query->when($request->status, fn($q, $status) => $q->where('status', $status));
-        $query->when($request->min_total_price, fn($q, $min) => $q->where('total_price', '>=', $min));
-        $query->when($request->max_total_price, fn($q, $max) => $q->where('total_price', '<=', $max));
-        $query->when($request->search, function ($q, $search) {
-            $q->where('id', $search)
-              ->orWhereHas('customer', fn($qc) => $qc->where('name', 'like', "%$search%"));
+        $orders = Cache::remember($key, 60, function () use ($request) {
+            
+            return $this->applyFilters(Order::query()->with('customer')->whereHas('customer')->with('products'), $request)->paginate();
+             
         });
 
-        return OrderResource::collection($query->paginate())->additional([
+        return OrderResource::collection($orders)->additional([
             'meta' => [
-                'total_orders' => $query->count(),
-                'total_amount' => $query->sum('total_price'),
+                'total_orders' => $orders->count(),
+                'total_amount' => $orders->sum('total_price'),
             ]
         ]);
     }
+
+        private function applyFilters($query, Request $request)
+    {
+
+        return $query->when($request->status, fn($q, $status) => $q->where('status', $status))
+            ->when($request->min_total_price, fn($q, $min) => $q->where('total_price', '>=', $min))
+            ->when($request->max_total_price, fn($q, $max) => $q->where('total_price', '<=', $max))
+            ->when($request->search, function ($q, $search) {
+            $q->where('id', $search)
+              ->orWhereHas('customer', fn($qc) => $qc->where('name', 'like', "%$search%"));
+    });
+}
 
     /**
      * Show single order with products and customer.

@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\quantityReminder;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Notifications\ProductAlmostOut;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+
+
 
 class ProductController extends Controller
 {
@@ -24,9 +28,14 @@ class ProductController extends Controller
     {
         Gate::authorize('view-products');
 
-        $query = $this->applyFilters(Product::query(), $request);
+        $key = 'products.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
 
-        return ProductResource::collection($query->paginate());
+        $products = Cache::remember($key, 60, function () use ($request) {
+            $query = $this->applyFilters(Product::query(), $request);
+            return $query->paginate();
+        });
+
+        return ProductResource::collection($products);
     }
 
     // Apply filters to product query
@@ -40,6 +49,10 @@ class ProductController extends Controller
             ->when($request->max_price, fn($q, $val) => $q->where('price', '<=', $val))
             ->when($request->search, fn($q, $val) => $q->where('name', 'like', "%$val%"));
     }
+
+
+
+
 
     // Create new product
     public function store(StoreProductRequest $request)
@@ -71,6 +84,12 @@ class ProductController extends Controller
             $users = User::all();
             Notification::send($users, new quantityReminder($product));
         }
+
+       
+         // Clear all product-related cached pages
+        DB::table('cache')
+            ->where('key', 'like', 'laravel_cache_products.page.%')
+            ->delete();
 
         return $this->success(['id' => $product->id], 'تم تحديث المنتج بنجاح');
     }

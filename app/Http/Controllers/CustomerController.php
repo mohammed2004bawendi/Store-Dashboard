@@ -11,6 +11,8 @@ use App\Traits\ApiResponseTrait;
 use Pest\ArchPresets\Custom;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
 {
@@ -19,11 +21,19 @@ class CustomerController extends Controller
     // List customers with filters
     public function index(Request $request)
     {
+
+        
         Gate::authorize('view-customers');
 
-        $query = $this->applyFilters(Customer::query(), $request);
+        $key = 'customers.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
 
-        return CustomerResource::collection($query->paginate());
+        $customers = Cache::remember($key, 60, function () use ($request) {
+            $query = $this->applyFilters(Customer::query(), $request);
+            return $query->paginate();
+        });
+
+
+        return CustomerResource::collection($customers);
     }
 
     // Filter by name or phone
