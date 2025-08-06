@@ -170,7 +170,7 @@ class OrderController extends Controller
      */
     public function destroy(Customer $customer, Order $order)
     {
-        $this->authorize('delete', $order, $customer);
+        $this->authorize('delete', $order);
 
         $this->deleteOrderData($order);
 
