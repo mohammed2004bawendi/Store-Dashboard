@@ -22,7 +22,7 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
 
-// heelo from queue branch         
+        
         Gate::authorize('view-customers');
 
         $key = 'customers.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
