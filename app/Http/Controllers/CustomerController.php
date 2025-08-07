@@ -21,7 +21,7 @@ class CustomerController extends Controller
     // List customers with filters
     public function index(Request $request)
     {
-
+//asdf
         
         Gate::authorize('view-customers');
 
