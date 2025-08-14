@@ -6,11 +6,13 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\User;
 use App\Models\Product;
 use Exception;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
+use App\Notifications\OrderCreatedNotification;
 use Illuminate\Support\Facades\DB;
 use Pest\ArchPresets\Custom;
 use Illuminate\Support\Facades\Gate;
@@ -23,11 +25,14 @@ use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Notification;
 
 class OrderController extends Controller
 {
     use AuthorizesRequests;
     use ApiResponseTrait;
+    use Notifiable;
 
     /**
      * Display all orders with filters and meta info.
@@ -41,11 +46,10 @@ class OrderController extends Controller
 
         $key = 'orders.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
 
-        $query = Cache::remember($key, 60, function () use ($request) {
-        return $this->applyFilters(Order::query()->with('customer')->whereHas('customer')->with('products'), $request);
+        $orders = Cache::remember($key, 60, function () use ($request) {
+        return $this->applyFilters(Order::query()->with('customer')->whereHas('customer')->with('products'), $request)->paginate();
 });
 
-        $orders = $query->paginate();
 
         return OrderResource::collection($orders)->additional([
             'meta' => [
@@ -120,7 +124,14 @@ class OrderController extends Controller
 
         $validated = $request->validated();
 
-        $orderService->create($validated);
+        $order = $orderService->create($validated);
+
+        $users = User::where('role', 'logistics')->get();
+        Notification::send(notifiables: $users, notification: new OrderCreatedNotification($order));
+
+        DB::table('cache')
+           ->where('key', 'like', 'laravel_cache_orders.page.%')
+           ->delete();
 
         return $this->success([], 'تم إنشاء الطلب بنجاح');
     }
@@ -162,6 +173,10 @@ class OrderController extends Controller
 
         $orderService->update($validated, $customer, $order);
 
+        DB::table('cache')
+            ->where('key', 'like', 'laravel_cache_orders.page.%')
+            ->delete();
+
         return $this->success([], 'تم تحديث الطلب بنجاح');
     }
 
@@ -173,6 +188,10 @@ class OrderController extends Controller
         $this->authorize('delete', $order);
 
         $this->deleteOrderData($order);
+
+        DB::table('cache')
+            ->where('key', 'like', 'laravel_cache_orders.page.%')
+            ->delete();
 
         return $this->success([], 'تم حذف الطلب بنجاح');
     }
@@ -224,11 +243,11 @@ class OrderController extends Controller
     /**
      * Generate and download PDF invoice using mPDF.
      */
-    public function downloadInvoice(Order $order)
+    public function downloadInvoice(Order $order, User $user)
     {
         $order->load(['customer', 'products']);
 
-        $html = view('invoices.order', compact('order'))->render();
+        $html = view('invoices.order', compact('order', 'user'))->render();
 
         $defaultConfig = (new ConfigVariables())->getDefaults();
         $fontDirs = $defaultConfig['fontDir'];

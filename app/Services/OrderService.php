@@ -7,19 +7,22 @@ use App\Models\Product;
 use App\Models\Customer;
 use App\Models\User;
 use App\Notifications\quantityReminder;
+use App\Notifications\OrderCreatedNotification;
 use Illuminate\Support\Facades\DB;
 use Exception;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Notification;
 
-class OrderService
+
+class OrderService 
 {
     use Notifiable;
 
     // Create a new order with customer and products
-    public function create(array $data): void
+    public function create(array $data): Order
     {
-        DB::transaction(function () use ($data) {
+        
+       $order =  DB::transaction(function () use ($data): Order {
             $customer = $this->createOrGetCustomer($data);
 
             $order = Order::create([
@@ -31,7 +34,14 @@ class OrderService
             $total = $this->attachProductsAndCalculateTotal($order, $data['products']);
 
             $order->update(['total_price' => $total]);
+
+            return $order;
+
         });
+
+        return $order;
+        
+
     }
 
     // Update an existing order and optionally customer/products
@@ -59,6 +69,17 @@ class OrderService
         });
     }
 
+
+    // private function sendNotifications(Order $order)
+    // {
+    
+    //  $users = User::where('role', 'logistics')->get();
+    //  Notification::send(notifiables: $users, notification: new OrderCreatedNotification($order));
+
+    // }
+
+
+
     // Create or fetch existing customer by phone
     private function createOrGetCustomer(array $data): Customer
     {
@@ -70,6 +91,7 @@ class OrderService
             ]
         );
     }
+
 
     // Attach products to order and calculate total
     private function attachProductsAndCalculateTotal(Order $order, array $products): float
@@ -85,12 +107,6 @@ class OrderService
                 throw new Exception("الكمية المطلوبة من المنتج {$product->name} غير متوفرة.");
             }
 
-            // Notify if stock is low
-            if ($product->quantity < 2 && $product->quantity >= 0) {
-                $users = User::all();
-                Notification::send($users, new quantityReminder($product));
-            }
-
             // Attach product to order with pivot data
             $order->products()->attach($product->id, [
                 'quantity' => $quantity,
@@ -99,6 +115,12 @@ class OrderService
 
             // Decrease stock
             $product->decrement('quantity', $quantity);
+
+            // Notify if stock is low
+            if ($product->quantity < 2 && $product->quantity >= 0) {
+                $users = User::all();
+                Notification::send($users, new quantityReminder($product));
+            }
 
             $total += $quantity * $product->price;
         }
