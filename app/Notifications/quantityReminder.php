@@ -9,15 +9,14 @@ use Illuminate\Notifications\Notification;
 use App\Models\Product;
 use Illuminate\Support\Carbon;
 
-
-
-class quantityReminder extends Notification
+class quantityReminder extends Notification implements ShouldQueue
 {
     use Queueable;
 
     public $product;
+
     /**
-     * Create a new notification instance.
+     * Constructor - store the product in the notification.
      */
     public function __construct(Product $product)
     {
@@ -25,9 +24,8 @@ class quantityReminder extends Notification
     }
 
     /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
+     * Define which channels this notification will use.
+     * Here we only use the "database" channel.
      */
     public function via(object $notifiable): array
     {
@@ -35,7 +33,19 @@ class quantityReminder extends Notification
     }
 
     /**
-     * Get the mail representation of the notification.
+     * Define queue names for each channel.
+     * This allows us to prioritize this notification.
+     * In this case, database notifications will go to the "high" queue.
+     */
+    public function viaQueues(): array
+    {
+        return [
+            'database' => 'high', // High priority queue
+        ];
+    }
+
+    /**
+     * Example mail method (not used here since via() doesn't return 'mail').
      */
     public function toMail(object $notifiable): MailMessage
     {
@@ -45,37 +55,43 @@ class quantityReminder extends Notification
             ->line('Thank you for using our application!');
     }
 
-    public function toDatabase($notifiable)
-{
-    return [
-        'title' => $this->product->quantity == 1 ? "الكمية على وشك النفاد" : "الكمية نفدت" ,
-        'product_id' => $this->product->id,
-        'product_name' => $this->product->name,
-        'quantity' => $this->product->quantity,
-        'url' => route('products.show', $this->product->id),
-    ];
-}
-
-
     /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
+     * Data that will be stored in the "database" notifications table.
      */
-    public function toArray(object $notifiable): array
+    public function toDatabase($notifiable)
     {
         return [
-            //
+            'title' => $this->product->quantity == 1
+                ? "Stock is about to run out"
+                : "Stock is out",
+            'product_id' => $this->product->id,
+            'product_name' => $this->product->name,
+            'quantity' => $this->product->quantity,
+            'url' => route('products.show', $this->product->id),
         ];
     }
 
-    public function databaseType(object $notifiable): string
-{
-    return 'Quantity_Reminder';
-}
+    /**
+     * Array representation (used for broadcast or JSON responses).
+     */
+    public function toArray(object $notifiable): array
+    {
+        return [];
+    }
 
+    /**
+     * Custom database type name for this notification.
+     */
+    public function databaseType(object $notifiable): string
+    {
+        return 'Quantity_Reminder';
+    }
+
+    /**
+     * Set initial "read_at" value for the database record.
+     */
     public function initialDatabaseReadAtValue(): ?Carbon
-{
-    return null;
-}
+    {
+        return null;
+    }
 }

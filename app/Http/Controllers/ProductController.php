@@ -35,6 +35,8 @@ class ProductController extends Controller
             return $query->paginate();
         });
 
+        
+
         return ProductResource::collection($products);
     }
 
@@ -82,7 +84,7 @@ class ProductController extends Controller
         // Notify users if quantity is less than 2
         if ($product->quantity < 2 && $product->quantity >= 0) {
             $users = User::all();
-            Notification::send($users, new quantityReminder($product));
+            Notification::send($users, notification: new quantityReminder($product));
         }
 
        
@@ -100,6 +102,10 @@ class ProductController extends Controller
         $this->authorize('delete', $product);
 
         $product->delete();
+
+        DB::table('cache')
+            ->where('key', 'like', 'laravel_cache_products.page.%')
+            ->delete();
 
         return $this->success([], 'تم حذف المنتج بنجاح');
     }
