@@ -8,68 +8,94 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\Product;
-use Exception;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\UpdateOrderRequest;
 use App\Notifications\OrderCreatedNotification;
-use Illuminate\Support\Facades\DB;
-use Pest\ArchPresets\Custom;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Services\OrderService;
 use App\Traits\ApiResponseTrait;
 use Spatie\SimpleExcel\SimpleExcelWriter;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Notification;
 use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Notification;
 
 class OrderController extends Controller
 {
     use AuthorizesRequests;
     use ApiResponseTrait;
-    use Notifiable;
+
+    /**
+     * Build orders cache key with versioning
+     */
+    private function ordersCacheKey(Request $request): string
+    {
+        // Create/keep the cache version with initial value = 1
+        $version = Cache::rememberForever('orders_cache_version', fn () => 1);
+
+        // Sort query parameters and exclude 'page' from hash
+        $params = $request->except('page');
+        ksort($params);
+        $hash = md5(json_encode($params));
+        $page = (int) $request->get('page', 1);
+
+        return "orders.v{$version}.page.{$page}.{$hash}";
+    }
+
+    /**
+     * Increment orders cache version (old keys become obsolete automatically)
+     */
+    private function bumpOrdersCacheVersion(): void
+    {
+        // If version key does not exist, create it and then increment
+        Cache::add('orders_cache_version', 1);
+        Cache::increment('orders_cache_version');
+    }
 
     /**
      * Display all orders with filters and meta info.
      */
-
-    
-
-
-    public function indexall(Request $request) {
+    public function indexall(Request $request)
+    {
         Gate::authorize('view-orders');
 
-        $key = 'orders.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
+        $key = $this->ordersCacheKey($request);
 
         $orders = Cache::remember($key, 60, function () use ($request) {
-        return $this->applyFilters(Order::query()->with('customer')->whereHas('customer')->with('products'), $request)->paginate();
-});
-
+            return $this->applyFilters(
+                Order::query()
+                    // Load only necessary columns for better performance
+                    ->with(['customer', 'products'])
+                    ->whereHas('customer'),
+                $request
+            )->paginate();
+        });
 
         return OrderResource::collection($orders)->additional([
             'meta' => [
+                // Note: count/sum are only for the current page
                 'total_orders' => $orders->count(),
                 'total_amount' => $orders->sum('total_price'),
+                // If you need the total for all results use:
+                // 'total_orders_all' => $orders->total(),
             ]
         ]);
     }
 
-        private function applyFilters($query, Request $request)
+    private function applyFilters($query, Request $request)
     {
-
-        return $query->when($request->status, fn($q, $status) => $q->where('status', $status))
-            ->when($request->min_total_price, fn($q, $min) => $q->where('total_price', '>=', $min))
-            ->when($request->max_total_price, fn($q, $max) => $q->where('total_price', '<=', $max))
+        return $query
+            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
+            ->when($request->min_total_price, fn ($q, $min) => $q->where('total_price', '>=', $min))
+            ->when($request->max_total_price, fn ($q, $max) => $q->where('total_price', '<=', $max))
             ->when($request->search, function ($q, $search) {
-            $q->where('id', $search)
-              ->orWhereHas('customer', fn($qc) => $qc->where('name', 'like', "%$search%"));
-    });
-}
+                $q->where('id', $search)
+                  ->orWhereHas('customer', fn ($qc) => $qc->where('name', 'like', "%{$search}%"));
+            });
+    }
 
     /**
      * Show single order with products and customer.
@@ -78,7 +104,8 @@ class OrderController extends Controller
     {
         $this->authorize('view', $order);
 
-        $order->with(['products', 'customer']);
+        // with() does not work on instance; use load() instead
+        $order->load(['products', 'customer']);
 
         return new OrderResource($order);
     }
@@ -98,22 +125,15 @@ class OrderController extends Controller
     {
         Gate::authorize('view-orders');
 
-        $query = $customer->orders();
-
-        $query->when($request->status, fn($q, $status) => $q->where('status', $status));
-        $query->when($request->min_total_price, fn($q, $min) => $q->where('total_price', '>=', $min));
-        $query->when($request->max_total_price, fn($q, $max) => $q->where('total_price', '<=', $max));
+        $query = $customer->orders()
+            ->when($request->status, fn ($q, $status) => $q->where('status', $status))
+            ->when($request->min_total_price, fn ($q, $min) => $q->where('total_price', '>=', $min))
+            ->when($request->max_total_price, fn ($q, $max) => $q->where('total_price', '<=', $max));
 
         return OrderResource::collection($query->paginate());
     }
 
-    /**
-     * Not implemented: show form for creating a new order.
-     */
-    public function create()
-    {
-        //
-    }
+    public function create() { /* ... */ }
 
     /**
      * Store new order using OrderService.
@@ -123,17 +143,15 @@ class OrderController extends Controller
         $this->authorize('create', Order::class);
 
         $validated = $request->validated();
-
         $order = $orderService->create($validated);
 
         $users = User::where('role', 'logistics')->get();
         Notification::send(notifiables: $users, notification: new OrderCreatedNotification($order));
 
-        DB::table('cache')
-           ->where('key', 'like', 'laravel_cache_orders.page.%')
-           ->delete();
+        // Instead of manually deleting cache keys:
+        $this->bumpOrdersCacheVersion();
 
-        return $this->success([], 'تم إنشاء الطلب بنجاح');
+        return $this->success([], 'Order created successfully');
     }
 
     /**
@@ -142,23 +160,18 @@ class OrderController extends Controller
     public function show(Customer $customer, Order $order, Request $request)
     {
         if ($customer->id != $order->customer_id) {
-            return response()->json("هذا الزبون لا يمتلك هذه الطلبية");
+            return response()->json("This customer does not own this order");
         }
 
         $this->authorize('view', $order);
 
-        $query = $order->products()->when($request->search, fn($q, $search) => $q->where('name', 'like', '%' . $search . '%'));
+        $query = $order->products()
+            ->when($request->search, fn ($q, $search) => $q->where('name', 'like', "%{$search}%"));
 
         return ProductResource::collection($query->get());
     }
 
-    /**
-     * Not implemented: show form to edit order.
-     */
-    public function edit(Order $order)
-    {
-        //
-    }
+    public function edit(Order $order) { /* ... */ }
 
     /**
      * Update existing order using OrderService.
@@ -168,16 +181,14 @@ class OrderController extends Controller
         $this->authorize('update', $order);
 
         $validated = $request->validated();
-
-        $customer = $order->customer;
+        $customer  = $order->customer;
 
         $orderService->update($validated, $customer, $order);
 
-        DB::table('cache')
-            ->where('key', 'like', 'laravel_cache_orders.page.%')
-            ->delete();
+        // Bump version instead of deleting cache table entries
+        $this->bumpOrdersCacheVersion();
 
-        return $this->success([], 'تم تحديث الطلب بنجاح');
+        return $this->success([], 'Order updated successfully');
     }
 
     /**
@@ -189,11 +200,10 @@ class OrderController extends Controller
 
         $this->deleteOrderData($order);
 
-        DB::table('cache')
-            ->where('key', 'like', 'laravel_cache_orders.page.%')
-            ->delete();
+        // Bump version after deletion
+        $this->bumpOrdersCacheVersion();
 
-        return $this->success([], 'تم حذف الطلب بنجاح');
+        return $this->success([], 'Order deleted successfully');
     }
 
     /**
@@ -206,7 +216,6 @@ class OrderController extends Controller
         }
 
         $order->products()->detach();
-
         $order->delete();
     }
 
@@ -218,16 +227,17 @@ class OrderController extends Controller
         $filename = 'orders_' . now()->timestamp . '.xlsx';
         $path = storage_path("app/public/{$filename}");
 
-        $orders = Order::with('customer')->get();
+        // Load only customer name
+        $orders = Order::with(['customer:id,name'])->get();
 
         SimpleExcelWriter::create($path)
             ->addRows($orders->map(function ($order) {
                 return [
-                    'رقم الطلب' => $order->id,
-                    'العميل' => $order->customer->name ?? '',
-                    'الحالة' => $order->status,
-                    'الإجمالي' => $order->total_price,
-                    'تاريخ الإنشاء' => $order->created_at->format('Y-m-d H:i:s'),
+                    'Order ID'      => $order->id,
+                    'Customer'      => $order->customer->name ?? '',
+                    'Status'        => $order->status,
+                    'Total'         => $order->total_price,
+                    'Created At'    => $order->created_at->format('Y-m-d H:i:s'),
                 ];
             }));
 
@@ -249,11 +259,10 @@ class OrderController extends Controller
 
         $html = view('invoices.order', compact('order', 'user'))->render();
 
-        $defaultConfig = (new ConfigVariables())->getDefaults();
-        $fontDirs = $defaultConfig['fontDir'];
-
-        $defaultFontConfig = (new FontVariables())->getDefaults();
-        $fontData = $defaultFontConfig['fontdata'];
+        $defaultConfig   = (new ConfigVariables())->getDefaults();
+        $fontDirs        = $defaultConfig['fontDir'];
+        $defaultFontConf = (new FontVariables())->getDefaults();
+        $fontData        = $defaultFontConf['fontdata'];
 
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
@@ -263,13 +272,9 @@ class OrderController extends Controller
             'directionality' => 'rtl',
             'autoLangToFont' => true,
             'autoScriptToLang' => true,
-            'fontDir' => array_merge($fontDirs, [
-                resource_path('fonts'),
-            ]),
+            'fontDir' => array_merge($fontDirs, [resource_path('fonts')]),
             'fontdata' => $fontData + [
-                'amiri' => [
-                    'R' => 'Amiri-Regular.ttf',
-                ],
+                'amiri' => ['R' => 'Amiri-Regular.ttf'],
             ],
         ]);
 
