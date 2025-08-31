@@ -2,31 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Customer;
 use App\Models\Order;
-use App\Models\User;
 use App\Models\Product;
-use Illuminate\Http\Request;
-use App\Http\Requests\StoreOrderRequest;
-use App\Http\Requests\UpdateOrderRequest;
+use App\Models\User;
 use App\Notifications\OrderCreatedNotification;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Services\OrderService;
 use App\Traits\ApiResponseTrait;
-use Spatie\SimpleExcel\SimpleExcelWriter;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Notification;
-use Mpdf\Mpdf;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
+use Mpdf\Mpdf;
+use Spatie\SimpleExcel\SimpleExcelWriter;
 
 class OrderController extends Controller
 {
-    use AuthorizesRequests;
     use ApiResponseTrait;
+    use AuthorizesRequests;
 
     /**
      * Build orders cache key with versioning
@@ -81,7 +81,7 @@ class OrderController extends Controller
                 'total_amount' => $orders->sum('total_price'),
                 // If you need the total for all results use:
                 // 'total_orders_all' => $orders->total(),
-            ]
+            ],
         ]);
     }
 
@@ -93,7 +93,7 @@ class OrderController extends Controller
             ->when($request->max_total_price, fn ($q, $max) => $q->where('total_price', '<=', $max))
             ->when($request->search, function ($q, $search) {
                 $q->where('id', $search)
-                  ->orWhereHas('customer', fn ($qc) => $qc->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('customer', fn ($qc) => $qc->where('name', 'like', "%{$search}%"));
             });
     }
 
@@ -133,7 +133,9 @@ class OrderController extends Controller
         return OrderResource::collection($query->paginate());
     }
 
-    public function create() { /* ... */ }
+    public function create()
+    { /* ... */
+    }
 
     /**
      * Store new order using OrderService.
@@ -160,7 +162,7 @@ class OrderController extends Controller
     public function show(Customer $customer, Order $order, Request $request)
     {
         if ($customer->id != $order->customer_id) {
-            return response()->json("This customer does not own this order");
+            return response()->json('This customer does not own this order');
         }
 
         $this->authorize('view', $order);
@@ -171,7 +173,9 @@ class OrderController extends Controller
         return ProductResource::collection($query->get());
     }
 
-    public function edit(Order $order) { /* ... */ }
+    public function edit(Order $order)
+    { /* ... */
+    }
 
     /**
      * Update existing order using OrderService.
@@ -181,7 +185,7 @@ class OrderController extends Controller
         $this->authorize('update', $order);
 
         $validated = $request->validated();
-        $customer  = $order->customer;
+        $customer = $order->customer;
 
         $orderService->update($validated, $customer, $order);
 
@@ -224,7 +228,7 @@ class OrderController extends Controller
      */
     public function export(Request $request)
     {
-        $filename = 'orders_' . now()->timestamp . '.xlsx';
+        $filename = 'orders_'.now()->timestamp.'.xlsx';
         $path = storage_path("app/public/{$filename}");
 
         // Load only customer name
@@ -233,17 +237,17 @@ class OrderController extends Controller
         SimpleExcelWriter::create($path)
             ->addRows($orders->map(function ($order) {
                 return [
-                    'Order ID'      => $order->id,
-                    'Customer'      => $order->customer->name ?? '',
-                    'Status'        => $order->status,
-                    'Total'         => $order->total_price,
-                    'Created At'    => $order->created_at->format('Y-m-d H:i:s'),
+                    'Order ID' => $order->id,
+                    'Customer' => $order->customer->name ?? '',
+                    'Status' => $order->status,
+                    'Total' => $order->total_price,
+                    'Created At' => $order->created_at->format('Y-m-d H:i:s'),
                 ];
             }));
 
         if ($request->expectsJson()) {
             return response()->json([
-                'url' => asset('storage/' . $filename)
+                'url' => asset('storage/'.$filename),
             ]);
         }
 
@@ -259,10 +263,10 @@ class OrderController extends Controller
 
         $html = view('invoices.order', compact('order', 'user'))->render();
 
-        $defaultConfig   = (new ConfigVariables())->getDefaults();
-        $fontDirs        = $defaultConfig['fontDir'];
-        $defaultFontConf = (new FontVariables())->getDefaults();
-        $fontData        = $defaultFontConf['fontdata'];
+        $defaultConfig = (new ConfigVariables)->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
+        $defaultFontConf = (new FontVariables)->getDefaults();
+        $fontData = $defaultFontConf['fontdata'];
 
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
@@ -282,7 +286,7 @@ class OrderController extends Controller
 
         return response($mpdf->Output('', 'S'), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="invoice-order-' . $order->id . '.pdf"',
+            'Content-Disposition' => 'attachment; filename="invoice-order-'.$order->id.'.pdf"',
         ]);
     }
 }

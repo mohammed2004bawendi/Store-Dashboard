@@ -2,33 +2,32 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\Customer;
 use App\Models\User;
-use App\Notifications\quantityReminder;
 use App\Notifications\OrderCreatedNotification;
-use Illuminate\Support\Facades\DB;
+use App\Notifications\quantityReminder;
 use Exception;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
-
-class OrderService 
+class OrderService
 {
     use Notifiable;
 
     // Create a new order with customer and products
     public function create(array $data): Order
     {
-        
-       $order =  DB::transaction(function () use ($data): Order {
+
+        $order = DB::transaction(function () use ($data): Order {
             $customer = $this->createOrGetCustomer($data);
 
             $order = Order::create([
                 'customer_id' => $customer->id,
                 'total_price' => 0,
-                'status' => $data['status'] ?? 'processing'
+                'status' => $data['status'] ?? 'processing',
             ]);
 
             $total = $this->attachProductsAndCalculateTotal($order, $data['products']);
@@ -40,7 +39,6 @@ class OrderService
         });
 
         return $order;
-        
 
     }
 
@@ -48,12 +46,12 @@ class OrderService
     public function update(array $data, Customer $customer, Order $order): void
     {
         DB::transaction(function () use ($data, $customer, $order) {
-            if (!empty($data['products'])) {
+            if (! empty($data['products'])) {
                 $this->restoreProductQuantities($order);
                 $order->products()->detach();
             }
 
-            if (!empty($data['customer'])) {
+            if (! empty($data['customer'])) {
                 $this->updateCustomerInfo($customer, $data['customer']);
             }
 
@@ -62,23 +60,20 @@ class OrderService
                 'total_price' => $data['total_price'] ?? $order->total_price,
             ]);
 
-            if (!empty($data['products'])) {
+            if (! empty($data['products'])) {
                 $total = $this->attachProductsAndCalculateTotal($order, $data['products']);
                 $order->update(['total_price' => $total]);
             }
         });
     }
 
-
     // private function sendNotifications(Order $order)
     // {
-    
+
     //  $users = User::where('role', 'logistics')->get();
     //  Notification::send(notifiables: $users, notification: new OrderCreatedNotification($order));
 
     // }
-
-
 
     // Create or fetch existing customer by phone
     private function createOrGetCustomer(array $data): Customer
@@ -87,11 +82,10 @@ class OrderService
             ['phone' => $data['phone']],
             [
                 'name' => $data['name'],
-                'address' => $data['address']
+                'address' => $data['address'],
             ]
         );
     }
-
 
     // Attach products to order and calculate total
     private function attachProductsAndCalculateTotal(Order $order, array $products): float
@@ -110,7 +104,7 @@ class OrderService
             // Attach product to order with pivot data
             $order->products()->attach($product->id, [
                 'quantity' => $quantity,
-                'price' => $product->price
+                'price' => $product->price,
             ]);
 
             // Decrease stock
@@ -140,7 +134,7 @@ class OrderService
     private function updateCustomerInfo(Customer $customer, array $data): void
     {
         $customer->update([
-            'name'    => $data['name'] ?? $customer->name,
+            'name' => $data['name'] ?? $customer->name,
             'address' => $data['address'] ?? $customer->address,
         ]);
     }

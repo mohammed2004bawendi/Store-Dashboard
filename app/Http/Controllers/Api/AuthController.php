@@ -11,20 +11,21 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     // Login method
-    public function login(Request $request) {
+    public function login(Request $request)
+    {
         // Validate request input
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
         // Find user by email
         $user = User::where('email', $request->email)->first();
 
         // Check if user exists and password is correct
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.']
+                'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
@@ -33,18 +34,19 @@ class AuthController extends Controller
 
         // Return token in JSON response
         return response()->json([
-            'token' => $token
+            'token' => $token,
         ]);
     }
 
     // Logout method
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         // Delete all tokens for the authenticated user
         $request->user()->tokens()->delete();
 
         // Return logout confirmation message
         return response()->json([
-            'message' => 'Logged out successfully'
+            'message' => 'Logged out successfully',
         ]);
     }
 }

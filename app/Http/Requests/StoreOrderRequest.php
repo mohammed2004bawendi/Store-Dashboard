@@ -22,13 +22,13 @@ class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-        'name' => 'required|string',
-        'phone' => 'required|string',
-        'address' => 'required|string',
-        'status' => 'nullable|string|in:قيد التنفيذ,تم التوصيل,ملغي',
-        'products' => 'required|array',
-        'products.*.id' => 'required|exists:products,id',
-        'products.*.quantity' => 'required|integer|min:1'
+            'name' => 'required|string',
+            'phone' => 'required|string',
+            'address' => 'required|string',
+            'status' => 'nullable|string|in:قيد التنفيذ,تم التوصيل,ملغي',
+            'products' => 'required|array',
+            'products.*.id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
         ];
     }
 }

@@ -7,35 +7,31 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use App\Traits\ApiResponseTrait;
-use Illuminate\Support\Facades\Notification;
 use App\Notifications\quantityReminder;
+use App\Traits\ApiResponseTrait;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Notifications\ProductAlmostOut;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-
-
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 
 class ProductController extends Controller
 {
-    use AuthorizesRequests, ApiResponseTrait;
+    use ApiResponseTrait, AuthorizesRequests;
 
     // List products with filters
     public function index(Request $request)
     {
         Gate::authorize('view-products');
 
-        $key = 'products.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
+        $key = 'products.page.'.$request->get('page', 1).'.'.md5(json_encode($request->all()));
 
         $products = Cache::remember($key, 60, function () use ($request) {
             $query = $this->applyFilters(Product::query(), $request);
+
             return $query->paginate();
         });
-
-        
 
         return ProductResource::collection($products);
     }
@@ -44,17 +40,13 @@ class ProductController extends Controller
     private function applyFilters($query, Request $request)
     {
         return $query
-            ->when($request->status, fn($q, $val) => $q->where('status', $val))
-            ->when($request->min_quantity, fn($q, $val) => $q->where('quantity', '>=', $val))
-            ->when($request->max_quantity, fn($q, $val) => $q->where('quantity', '<=', $val))
-            ->when($request->min_price, fn($q, $val) => $q->where('price', '>=', $val))
-            ->when($request->max_price, fn($q, $val) => $q->where('price', '<=', $val))
-            ->when($request->search, fn($q, $val) => $q->where('name', 'like', "%$val%"));
+            ->when($request->status, fn ($q, $val) => $q->where('status', $val))
+            ->when($request->min_quantity, fn ($q, $val) => $q->where('quantity', '>=', $val))
+            ->when($request->max_quantity, fn ($q, $val) => $q->where('quantity', '<=', $val))
+            ->when($request->min_price, fn ($q, $val) => $q->where('price', '>=', $val))
+            ->when($request->max_price, fn ($q, $val) => $q->where('price', '<=', $val))
+            ->when($request->search, fn ($q, $val) => $q->where('name', 'like', "%$val%"));
     }
-
-
-
-
 
     // Create new product
     public function store(StoreProductRequest $request)
@@ -87,8 +79,7 @@ class ProductController extends Controller
             Notification::send($users, notification: new quantityReminder($product));
         }
 
-       
-         // Clear all product-related cached pages
+        // Clear all product-related cached pages
         DB::table('cache')
             ->where('key', 'like', 'laravel_cache_products.page.%')
             ->delete();

@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Customer;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class OrderFactory extends Factory
 {
@@ -18,8 +18,8 @@ class OrderFactory extends Factory
         return [
             'customer_id' => $customer->id,
             'status' => fake()->randomElement(['جديد', 'قيد التجهيز', 'مكتمل']),
-            'total_price' => 0 // مؤقتًا
-];
+            'total_price' => 0, // مؤقتًا
+        ];
 
     }
 }

@@ -49,8 +49,8 @@ class OrderCreatedNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('A new order has been created')
-            ->greeting('Hello ' . $notifiable->name)
-            ->line('A new order has been created with ID #' . $this->order->id)
+            ->greeting('Hello '.$notifiable->name)
+            ->line('A new order has been created with ID #'.$this->order->id)
             ->line('Invoice details are available.')
             ->action('View Invoice', route('orders.invoice', $this->order->id))
             ->line('Please check the dashboard to follow up.');
