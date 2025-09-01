@@ -3,16 +3,12 @@
 namespace App\Notifications;
 
 use App\Models\Product;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 
-class quantityReminder extends Notification implements ShouldQueue
+class quantityReminder extends Notification
 {
-    use Queueable;
-
     public $product;
 
     /**

@@ -7,7 +7,7 @@ use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\User;
-use App\Notifications\QuantityReminder; // Make sure the file/class name is PascalCase
+use App\Notifications\QuantityReminder;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -112,13 +112,13 @@ class ProductController extends Controller
 
         $product->update($request->validated());
 
-        // Send notification if stock is critically low
-        if ($product->quantity < 2 && $product->quantity >= 0) {
-            $users = User::all();
-            Notification::send($users, new QuantityReminder($product));
-            // If users are large in number, use chunk() to avoid loading all users at once:
-            // User::chunk(200, fn($batch) => Notification::send($batch, new QuantityReminder($product)));
-        }
+        // // Send notification if stock is critically low
+        // if ($product->quantity < 2 && $product->quantity >= 0) {
+        //     $users = User::all();
+        //     Notification::send($users, new QuantityReminder($product));
+        //     // If users are large in number, use chunk() to avoid loading all users at once:
+        //     // User::chunk(200, fn($batch) => Notification::send($batch, new QuantityReminder($product)));
+        // }
 
         // Bump cache version instead of deleting cache entries
         $this->bumpProductsCacheVersion();
