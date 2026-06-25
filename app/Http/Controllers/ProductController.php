@@ -2,69 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Products\Actions\CountProductCustomersAction;
+use App\Domain\Products\Actions\CreateProductAction;
+use App\Domain\Products\Actions\DeleteProductAction;
+use App\Domain\Products\Actions\ListProductsAction;
+use App\Domain\Products\Actions\UpdateProductAction;
+use App\Domain\Products\Data\CreateProductData;
+use App\Domain\Products\Data\ProductFiltersData;
+use App\Domain\Products\Data\UpdateProductData;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
-use App\Models\User;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use App\Traits\ApiResponseTrait;
-use Illuminate\Support\Facades\Notification;
-use App\Notifications\quantityReminder;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Notifications\ProductAlmostOut;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-
-
 
 class ProductController extends Controller
 {
     use AuthorizesRequests, ApiResponseTrait;
 
-    // List products with filters
-    public function index(Request $request)
+    public function index(Request $request, ListProductsAction $listProducts)
     {
         Gate::authorize('view-products');
 
-        $key = 'products.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
-
-        $products = Cache::remember($key, 60, function () use ($request) {
-            $query = $this->applyFilters(Product::query(), $request);
-            return $query->paginate();
-        });
+        $products = $listProducts->execute(
+            ProductFiltersData::fromArray($request->all())
+        );
 
         return ProductResource::collection($products);
     }
 
-    // Apply filters to product query
-    private function applyFilters($query, Request $request)
-    {
-        return $query
-            ->when($request->status, fn($q, $val) => $q->where('status', $val))
-            ->when($request->min_quantity, fn($q, $val) => $q->where('quantity', '>=', $val))
-            ->when($request->max_quantity, fn($q, $val) => $q->where('quantity', '<=', $val))
-            ->when($request->min_price, fn($q, $val) => $q->where('price', '>=', $val))
-            ->when($request->max_price, fn($q, $val) => $q->where('price', '<=', $val))
-            ->when($request->search, fn($q, $val) => $q->where('name', 'like', "%$val%"));
-    }
-
-
-
-
-
-    // Create new product
-    public function store(StoreProductRequest $request)
+    public function store(StoreProductRequest $request, CreateProductAction $createProduct)
     {
         $this->authorize('create', Product::class);
 
-        $product = Product::create($request->validated());
+        $product = $createProduct->execute(
+            CreateProductData::fromArray($request->validated())
+        );
 
-        return $this->success(['id' => $product->id], 'تم إنشاء المنتج بنجاح');
+        return $this->success(['id' => $product->id], "\u{062A}\u{0645} \u{0625}\u{0646}\u{0634}\u{0627}\u{0621} \u{0627}\u{0644}\u{0645}\u{0646}\u{062A}\u{062C} \u{0628}\u{0646}\u{062C}\u{0627}\u{062D}");
     }
 
-    // Show single product
     public function show(Product $product)
     {
         $this->authorize('view', $product);
@@ -72,47 +52,33 @@ class ProductController extends Controller
         return new ProductResource($product);
     }
 
-    // Update product and notify if quantity is low
-    public function update(UpdateProductRequest $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product, UpdateProductAction $updateProduct)
     {
         $this->authorize('update', $product);
 
-        $product->update($request->validated());
+        $product = $updateProduct->execute(
+            $product,
+            UpdateProductData::fromArray($request->validated())
+        );
 
-        // Notify users if quantity is less than 2
-        if ($product->quantity < 2 && $product->quantity >= 0) {
-            $users = User::all();
-            Notification::send($users, new quantityReminder($product));
-        }
-
-       
-         // Clear all product-related cached pages
-        DB::table('cache')
-            ->where('key', 'like', 'laravel_cache_products.page.%')
-            ->delete();
-
-        return $this->success(['id' => $product->id], 'تم تحديث المنتج بنجاح');
+        return $this->success(['id' => $product->id], "\u{062A}\u{0645} \u{062A}\u{062D}\u{062F}\u{064A}\u{062B} \u{0627}\u{0644}\u{0645}\u{0646}\u{062A}\u{062C} \u{0628}\u{0646}\u{062C}\u{0627}\u{062D}");
     }
 
-    // Delete product
-    public function destroy(Product $product)
+    public function destroy(Product $product, DeleteProductAction $deleteProduct)
     {
         $this->authorize('delete', $product);
 
-        $product->delete();
+        $deleteProduct->execute($product);
 
-        return $this->success([], 'تم حذف المنتج بنجاح');
+        return $this->success([], "\u{062A}\u{0645} \u{062D}\u{0630}\u{0641} \u{0627}\u{0644}\u{0645}\u{0646}\u{062A}\u{062C} \u{0628}\u{0646}\u{062C}\u{0627}\u{062D}");
     }
 
-    // Count distinct customers who ordered this product
-    public function customerCount(Product $product)
+    public function customerCount(Product $product, CountProductCustomersAction $countProductCustomers)
     {
         $this->authorize('view', $product);
 
-        $count = $product->orders()
-            ->distinct('customer_id')
-            ->count('customer_id');
-
-        return response()->json(['count' => $count]);
+        return response()->json([
+            'count' => $countProductCustomers->execute($product),
+        ]);
     }
 }
