@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\User;
 use App\Notifications\OrderCreatedNotification;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 
@@ -43,9 +44,8 @@ class CreateOrderAction
                 new OrderCreatedNotification($order),
             );
 
-            DB::table('cache')
-                ->where('key', 'like', 'laravel_cache_orders.page.%')
-                ->delete();
+            Cache::add('orders_cache_version', 1);
+            Cache::increment('orders_cache_version');
 
             return $order;
         });

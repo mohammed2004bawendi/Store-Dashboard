@@ -1,14 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\QuantityReminderController;
-use App\Models\quantityReminder;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,18 +15,18 @@ use App\Models\quantityReminder;
 |--------------------------------------------------------------------------
 */
 
-
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/user', function (Request $request) {
         $user = $request->user();
+
         return response()->json([
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => $user->role
+            'role' => $user->role,
         ]);
     });
 
@@ -40,7 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Products
     Route::apiResource('products', ProductController::class);
     Route::get('/products/{product}/buyers-count', [ProductController::class, 'customerCount']);
-   // Route::post('/products/weo', [ProductController::class, 'withCache']);
+    // Route::post('/products/weo', [ProductController::class, 'withCache']);
 
     // Orders (Global)
     Route::get('/orders', [OrderController::class, 'indexall']);
@@ -56,12 +55,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'data']);
 
-
-    //Notifications
+    // Notifications
 
     Route::get('/notifications', [QuantityReminderController::class, 'index']);
     Route::post('/notifications/{id}/read', [QuantityReminderController::class, 'markAsRead']);
 });
-
-
-

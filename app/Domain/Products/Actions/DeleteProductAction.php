@@ -3,7 +3,7 @@
 namespace App\Domain\Products\Actions;
 
 use App\Models\Product;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class DeleteProductAction
 {
@@ -11,8 +11,7 @@ class DeleteProductAction
     {
         $product->delete();
 
-        DB::table('cache')
-            ->where('key', 'like', 'laravel_cache_products.page.%')
-            ->delete();
+        Cache::add('products_cache_version', 1);
+        Cache::increment('products_cache_version');
     }
 }

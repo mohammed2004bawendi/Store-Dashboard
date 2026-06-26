@@ -6,7 +6,7 @@ use App\Domain\Products\Data\UpdateProductData;
 use App\Models\Product;
 use App\Models\User;
 use App\Notifications\quantityReminder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 
 class UpdateProductAction
@@ -19,9 +19,8 @@ class UpdateProductAction
             Notification::send(User::all(), new quantityReminder($product));
         }
 
-        DB::table('cache')
-            ->where('key', 'like', 'laravel_cache_products.page.%')
-            ->delete();
+        Cache::add('products_cache_version', 1);
+        Cache::increment('products_cache_version');
 
         return $product;
     }

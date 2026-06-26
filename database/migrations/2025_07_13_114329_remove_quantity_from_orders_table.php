@@ -9,12 +9,12 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-   public function up()
-{
-    Schema::table('orders', function (Blueprint $table) {
-        $table->dropColumn('quantity');
-    });
-}
+    public function up()
+    {
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropColumn('quantity');
+        });
+    }
 
     /**
      * Reverse the migrations.

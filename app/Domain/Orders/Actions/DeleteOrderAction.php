@@ -3,7 +3,7 @@
 namespace App\Domain\Orders\Actions;
 
 use App\Models\Order;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class DeleteOrderAction
 {
@@ -17,8 +17,7 @@ class DeleteOrderAction
 
         $order->delete();
 
-        DB::table('cache')
-            ->where('key', 'like', 'laravel_cache_orders.page.%')
-            ->delete();
+        Cache::add('orders_cache_version', 1);
+        Cache::increment('orders_cache_version');
     }
 }

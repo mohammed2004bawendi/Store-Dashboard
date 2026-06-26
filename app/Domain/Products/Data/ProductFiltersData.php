@@ -2,6 +2,8 @@
 
 namespace App\Domain\Products\Data;
 
+use Illuminate\Support\Facades\Cache;
+
 class ProductFiltersData
 {
     private function __construct(
@@ -32,6 +34,11 @@ class ProductFiltersData
 
     public function cacheKey(): string
     {
-        return 'products.page.' . $this->page . '.' . md5(json_encode($this->attributes));
+        $version = Cache::rememberForever('products_cache_version', fn () => 1);
+        $params = $this->attributes;
+        unset($params['page']);
+        ksort($params);
+
+        return "products.v{$version}.page.{$this->page}." . md5(json_encode($params));
     }
 }

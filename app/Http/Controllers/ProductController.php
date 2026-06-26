@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Gate;
 
 class ProductController extends Controller
 {
-    use AuthorizesRequests, ApiResponseTrait;
+    use ApiResponseTrait, AuthorizesRequests;
 
     public function index(Request $request, ListProductsAction $listProducts)
     {
@@ -42,7 +42,7 @@ class ProductController extends Controller
             CreateProductData::fromArray($request->validated())
         );
 
-        return $this->success(['id' => $product->id], "\u{062A}\u{0645} \u{0625}\u{0646}\u{0634}\u{0627}\u{0621} \u{0627}\u{0644}\u{0645}\u{0646}\u{062A}\u{062C} \u{0628}\u{0646}\u{062C}\u{0627}\u{062D}");
+        return $this->success(['id' => $product->id], 'Product created successfully');
     }
 
     public function show(Product $product)
@@ -61,7 +61,7 @@ class ProductController extends Controller
             UpdateProductData::fromArray($request->validated())
         );
 
-        return $this->success(['id' => $product->id], "\u{062A}\u{0645} \u{062A}\u{062D}\u{062F}\u{064A}\u{062B} \u{0627}\u{0644}\u{0645}\u{0646}\u{062A}\u{062C} \u{0628}\u{0646}\u{062C}\u{0627}\u{062D}");
+        return $this->success(['id' => $product->id], 'Product updated successfully');
     }
 
     public function destroy(Product $product, DeleteProductAction $deleteProduct)
@@ -70,7 +70,7 @@ class ProductController extends Controller
 
         $deleteProduct->execute($product);
 
-        return $this->success([], "\u{062A}\u{0645} \u{062D}\u{0630}\u{0641} \u{0627}\u{0644}\u{0645}\u{0646}\u{062A}\u{062C} \u{0628}\u{0646}\u{062C}\u{0627}\u{062D}");
+        return $this->success([], 'Product deleted successfully');
     }
 
     public function customerCount(Product $product, CountProductCustomersAction $countProductCustomers)

@@ -4,6 +4,7 @@ namespace App\Domain\Orders\Actions;
 
 use App\Domain\Orders\Data\UpdateOrderData;
 use App\Models\Order;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UpdateOrderAction
@@ -38,9 +39,8 @@ class UpdateOrderAction
                 $order->update(['total_price' => $total]);
             }
 
-            DB::table('cache')
-                ->where('key', 'like', 'laravel_cache_orders.page.%')
-                ->delete();
+            Cache::add('orders_cache_version', 1);
+            Cache::increment('orders_cache_version');
         });
     }
 

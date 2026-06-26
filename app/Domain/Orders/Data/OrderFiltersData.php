@@ -2,6 +2,8 @@
 
 namespace App\Domain\Orders\Data;
 
+use Illuminate\Support\Facades\Cache;
+
 class OrderFiltersData
 {
     private function __construct(
@@ -28,6 +30,11 @@ class OrderFiltersData
 
     public function cacheKey(): string
     {
-        return 'orders.page.' . $this->page . '.' . md5(json_encode($this->attributes));
+        $version = Cache::rememberForever('orders_cache_version', fn () => 1);
+        $params = $this->attributes;
+        unset($params['page']);
+        ksort($params);
+
+        return "orders.v{$version}.page.{$this->page}." . md5(json_encode($params));
     }
 }

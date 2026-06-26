@@ -20,12 +20,11 @@ class UpdateCustomerRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-{
-    return [
-        'name' => 'nullable|string|max:255',
-        'phone' => 'nullable|string|max:20|unique:customers,phone',
-        'address' => 'nullable|string|max:255',
-    ];
-}
-
+    {
+        return [
+            'name' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20|unique:customers,phone',
+            'address' => 'nullable|string|max:255',
+        ];
+    }
 }

@@ -2,11 +2,11 @@
 
 namespace App\Notifications;
 
+use App\Models\Product;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\Product;
 use Illuminate\Support\Carbon;
 
 class quantityReminder extends Notification implements ShouldQueue
@@ -62,8 +62,8 @@ class quantityReminder extends Notification implements ShouldQueue
     {
         return [
             'title' => $this->product->quantity == 1
-                ? "Stock is about to run out"
-                : "Stock is out",
+                ? 'Stock is about to run out'
+                : 'Stock is out',
             'product_id' => $this->product->id,
             'product_name' => $this->product->name,
             'quantity' => $this->product->quantity,

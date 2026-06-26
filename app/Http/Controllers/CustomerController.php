@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Gate;
 
 class CustomerController extends Controller
 {
-    use AuthorizesRequests, ApiResponseTrait;
+    use ApiResponseTrait, AuthorizesRequests;
 
     public function index(Request $request, ListCustomersAction $listCustomers)
     {
@@ -69,6 +69,6 @@ class CustomerController extends Controller
 
         $deleteCustomer->execute($customer);
 
-        return $this->success([], "\u{062A}\u{0645} \u{062D}\u{0630}\u{0641} \u{0627}\u{0644}\u{0639}\u{0645}\u{064A}\u{0644}");
+        return $this->success([], 'تم حذف العميل');
     }
 }

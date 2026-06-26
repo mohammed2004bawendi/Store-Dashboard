@@ -14,7 +14,7 @@ class ListOrdersAction
     {
         return Cache::remember($filters->cacheKey(), 60, function () use ($filters) {
             return $this->applyFilters(
-                Order::query()->with('customer')->whereHas('customer')->with('products'),
+                Order::query()->with(['customer', 'products'])->whereHas('customer'),
                 $filters,
             )->paginate();
         });

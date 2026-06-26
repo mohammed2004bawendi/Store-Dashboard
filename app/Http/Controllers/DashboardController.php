@@ -1,15 +1,14 @@
 <?php
 
 // app/Http/Controllers/DashboardController.php
+
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Product;
 use App\Models\Order;
-use App\Models\User;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {

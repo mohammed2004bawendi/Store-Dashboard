@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller
 {
-    use AuthorizesRequests, ApiResponseTrait;
+    use ApiResponseTrait, AuthorizesRequests;
 
     public function indexall(Request $request, ListOrdersAction $listOrders)
     {
@@ -79,7 +79,7 @@ class OrderController extends Controller
             CreateOrderData::fromArray($request->validated())
         );
 
-        return $this->success([], "\u{062A}\u{0645} \u{0625}\u{0646}\u{0634}\u{0627}\u{0621} \u{0627}\u{0644}\u{0637}\u{0644}\u{0628} \u{0628}\u{0646}\u{062C}\u{0627}\u{062D}");
+        return $this->success([], 'Order created successfully');
     }
 
     public function show(Customer $customer, Order $order, Request $request, ListOrderProductsAction $listOrderProducts)
@@ -109,7 +109,7 @@ class OrderController extends Controller
             UpdateOrderData::fromArray($request->validated())
         );
 
-        return $this->success([], "\u{062A}\u{0645} \u{062A}\u{062D}\u{062F}\u{064A}\u{062B} \u{0627}\u{0644}\u{0637}\u{0644}\u{0628} \u{0628}\u{0646}\u{062C}\u{0627}\u{062D}");
+        return $this->success([], 'Order updated successfully');
     }
 
     public function destroy(Order $order, DeleteOrderAction $deleteOrder)
@@ -118,7 +118,7 @@ class OrderController extends Controller
 
         $deleteOrder->execute($order);
 
-        return $this->success([], "\u{062A}\u{0645} \u{062D}\u{0630}\u{0641} \u{0627}\u{0644}\u{0637}\u{0644}\u{0628} \u{0628}\u{0646}\u{062C}\u{0627}\u{062D}");
+        return $this->success([], 'Order deleted successfully');
     }
 
     public function export(Request $request, ExportOrdersAction $exportOrders)

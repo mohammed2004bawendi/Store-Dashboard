@@ -20,12 +20,11 @@ class StoreCustomerRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-{
-    return [
-        'name' => 'required|string|max:255',
-        'phone' => 'required|string|max:20|unique:customers,phone',
-        'address' => 'required|string|max:255',
-    ];
-}
-
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:customers,phone',
+            'address' => 'required|string|max:255',
+        ];
+    }
 }

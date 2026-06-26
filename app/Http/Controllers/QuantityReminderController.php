@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\quantityReminder;
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class QuantityReminderController extends Controller
 {
@@ -14,7 +14,7 @@ class QuantityReminderController extends Controller
     public function index(Request $request)
     {
         return response()->json([
-            'notifications' => $request->user()->notifications()->latest()->get()
+            'notifications' => $request->user()->notifications()->latest()->get(),
         ]);
     }
 

@@ -2,6 +2,8 @@
 
 namespace App\Domain\Customers\Data;
 
+use Illuminate\Support\Facades\Cache;
+
 class CustomerFiltersData
 {
     private function __construct(
@@ -24,6 +26,11 @@ class CustomerFiltersData
 
     public function cacheKey(): string
     {
-        return 'customers.page.' . $this->page . '.' . md5(json_encode($this->attributes));
+        $version = Cache::rememberForever('customers_cache_version', fn () => 1);
+        $params = $this->attributes;
+        unset($params['page']);
+        ksort($params);
+
+        return "customers.v{$version}.page.{$this->page}." . md5(json_encode($params));
     }
 }

@@ -20,19 +20,18 @@ class UpdateOrderRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-{
-    return [
-        'status' => 'nullable|string|in:قيد التنفيذ,تم التوصيل,ملغي',
-        'total_price' => 'nullable|numeric|min:0',
+    {
+        return [
+            'status' => 'nullable|string|in:قيد التنفيذ,تم التوصيل,ملغي',
+            'total_price' => 'nullable|numeric|min:0',
 
-        'customer' => 'nullable|array',
-        'customer.name' => 'nullable|string|max:255',
-        'customer.address' => 'nullable|string|max:255',
+            'customer' => 'nullable|array',
+            'customer.name' => 'nullable|string|max:255',
+            'customer.address' => 'nullable|string|max:255',
 
-        'products' => 'nullable|array',
-        'products.*.id' => 'nullable|exists:products,id',
-        'products.*.quantity' => 'nullable|integer|min:1',
-    ];
-}
-
+            'products' => 'nullable|array',
+            'products.*.id' => 'nullable|exists:products,id',
+            'products.*.quantity' => 'nullable|integer|min:1',
+        ];
+    }
 }
