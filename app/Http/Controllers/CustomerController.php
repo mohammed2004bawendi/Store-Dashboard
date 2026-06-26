@@ -72,3 +72,5 @@ class CustomerController extends Controller
         return $this->success([], 'تم حذف العميل');
     }
 }
+
+//test
