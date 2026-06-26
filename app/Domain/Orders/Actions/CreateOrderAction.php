@@ -5,7 +5,10 @@ namespace App\Domain\Orders\Actions;
 use App\Domain\Orders\Data\CreateOrderData;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\User;
+use App\Notifications\OrderCreatedNotification;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class CreateOrderAction
 {
@@ -14,9 +17,9 @@ class CreateOrderAction
     ) {
     }
 
-    public function execute(CreateOrderData $data): void
+    public function execute(CreateOrderData $data): Order
     {
-        DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data): Order {
             $customer = Customer::firstOrCreate(
                 ['phone' => $data->phone],
                 [
@@ -34,6 +37,17 @@ class CreateOrderAction
             $total = $this->addOrderItems->execute($order, $data->products);
 
             $order->update(['total_price' => $total]);
+
+            Notification::send(
+                User::where('role', 'logistics')->get(),
+                new OrderCreatedNotification($order),
+            );
+
+            DB::table('cache')
+                ->where('key', 'like', 'laravel_cache_orders.page.%')
+                ->delete();
+
+            return $order;
         });
     }
 }

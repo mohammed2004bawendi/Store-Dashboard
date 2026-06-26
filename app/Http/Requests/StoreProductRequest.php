@@ -26,7 +26,7 @@ class StoreProductRequest extends FormRequest
         'description' => 'required|string',
         'price' => 'required|integer|min:0',
         'quantity' => 'required|integer|min:0',
-        'status' => 'required|in:متاح,غير متاح',
+        'status' => 'required|in:متوفر,غير متوفر',
     ];
 }
 

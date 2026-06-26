@@ -52,6 +52,7 @@
     <div class="header">
         <h2>فاتورة الطلب رقم #{{ $order->id }}</h2>
         <p>تاريخ: {{ $order->created_at->format('Y-m-d H:i') }}</p>
+        <p>تم إنشاء الطلب من قبل: {{ auth()->user()->name }}</p>
     </div>
 
     <div class="section">

@@ -37,6 +37,10 @@ class UpdateOrderAction
                 $total = $this->addOrderItems->execute($order, $data->products);
                 $order->update(['total_price' => $total]);
             }
+
+            DB::table('cache')
+                ->where('key', 'like', 'laravel_cache_orders.page.%')
+                ->delete();
         });
     }
 

@@ -27,16 +27,16 @@ class AddOrderItemsAction
                 throw new Exception("\u{0627}\u{0644}\u{0643}\u{0645}\u{064A}\u{0629} \u{0627}\u{0644}\u{0645}\u{0637}\u{0644}\u{0648}\u{0628}\u{0629} \u{0645}\u{0646} \u{0627}\u{0644}\u{0645}\u{0646}\u{062A}\u{062C} {$product->name} \u{063A}\u{064A}\u{0631} \u{0645}\u{062A}\u{0648}\u{0641}\u{0631}\u{0629}.");
             }
 
-            if ($product->quantity < 2 && $product->quantity >= 0) {
-                Notification::send(User::all(), new quantityReminder($product));
-            }
-
             $order->products()->attach($product->id, [
                 'quantity' => $quantity,
                 'price' => $product->price,
             ]);
 
             $product->decrement('quantity', $quantity);
+
+            if ($product->quantity < 2 && $product->quantity >= 0) {
+                Notification::send(User::all(), new quantityReminder($product));
+            }
 
             $total += $quantity * $product->price;
         }
