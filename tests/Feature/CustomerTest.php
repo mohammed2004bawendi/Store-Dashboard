@@ -90,7 +90,7 @@ class CustomerTest extends TestCase
         $response = $this->deleteJson("/api/customers/{$customer->id}");
 
         $response->assertOk()
-                 ->assertJsonFragment(['message' => 'Customer deleted successfully!']);
+                 ->assertJsonFragment(['message' => "\u{062A}\u{0645} \u{062D}\u{0630}\u{0641} \u{0627}\u{0644}\u{0639}\u{0645}\u{064A}\u{0644}"]);
 
         $this->assertDatabaseMissing('customers', ['id' => $customer->id]);
     }

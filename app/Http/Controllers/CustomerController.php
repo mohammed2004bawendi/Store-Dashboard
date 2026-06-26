@@ -2,59 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\CustomerResource;
-use App\Models\Customer;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Traits\ApiResponseTrait;
-use Pest\ArchPresets\Custom;
+use App\Domain\Customers\Actions\CreateCustomerAction;
+use App\Domain\Customers\Actions\DeleteCustomerAction;
+use App\Domain\Customers\Actions\ListCustomersAction;
+use App\Domain\Customers\Actions\UpdateCustomerAction;
+use App\Domain\Customers\Data\CreateCustomerData;
+use App\Domain\Customers\Data\CustomerFiltersData;
+use App\Domain\Customers\Data\UpdateCustomerData;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use App\Http\Resources\CustomerResource;
+use App\Models\Customer;
+use App\Traits\ApiResponseTrait;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerController extends Controller
 {
     use AuthorizesRequests, ApiResponseTrait;
 
-    // List customers with filters
-    public function index(Request $request)
+    public function index(Request $request, ListCustomersAction $listCustomers)
     {
-
-        
         Gate::authorize('view-customers');
 
-        $key = 'customers.page.' . $request->get('page', 1) . '.' . md5(json_encode($request->all()));
-
-        $customers = Cache::remember($key, 60, function () use ($request) {
-            $query = $this->applyFilters(Customer::query(), $request);
-            return $query->paginate();
-        });
-
+        $customers = $listCustomers->execute(
+            CustomerFiltersData::fromArray($request->all())
+        );
 
         return CustomerResource::collection($customers);
     }
 
-    // Filter by name or phone
-    private function applyFilters($query, Request $request)
-    {
-        return $query
-            ->when($request->search, fn($q, $val) => $q->where('name', 'like', "%$val%"))
-            ->when($request->phone, fn($q, $val) => $q->where('phone', 'like', "%$val%"));
-    }
-
-    // Create customer
-    public function store(StoreCustomerRequest $request)
+    public function store(StoreCustomerRequest $request, CreateCustomerAction $createCustomer)
     {
         $this->authorize('create', Customer::class);
 
-        $customer = Customer::create($request->validated());
+        $customer = $createCustomer->execute(
+            CreateCustomerData::fromArray($request->validated())
+        );
 
         return new CustomerResource($customer);
     }
 
-    // Show customer
     public function show(Customer $customer)
     {
         $this->authorize('view', $customer);
@@ -62,23 +51,24 @@ class CustomerController extends Controller
         return new CustomerResource($customer);
     }
 
-    // Update customer
-    public function update(UpdateCustomerRequest $request, Customer $customer)
+    public function update(UpdateCustomerRequest $request, Customer $customer, UpdateCustomerAction $updateCustomer)
     {
         $this->authorize('update', $customer);
 
-        $customer->update($request->validated());
+        $customer = $updateCustomer->execute(
+            $customer,
+            UpdateCustomerData::fromArray($request->validated())
+        );
 
         return new CustomerResource($customer);
     }
 
-    // Delete customer
-    public function destroy(Customer $customer)
+    public function destroy(Customer $customer, DeleteCustomerAction $deleteCustomer)
     {
         $this->authorize('delete', $customer);
 
-        $customer->delete();
+        $deleteCustomer->execute($customer);
 
-        return $this->success([], 'تم حذف العميل');
+        return $this->success([], "\u{062A}\u{0645} \u{062D}\u{0630}\u{0641} \u{0627}\u{0644}\u{0639}\u{0645}\u{064A}\u{0644}");
     }
 }
