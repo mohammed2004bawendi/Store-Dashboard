@@ -12,6 +12,17 @@ class Product extends Model
 
     protected $fillable = ['name', 'description', 'quantity', 'status', 'price'];
 
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'quantity' => 'integer',
+            'price' => 'integer',
+        ];
+    }
+
     public function orders(): BelongsToMany
     {
         return $this->belongsToMany(Order::class);

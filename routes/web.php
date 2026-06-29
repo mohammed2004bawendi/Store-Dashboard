@@ -18,6 +18,10 @@ Route::get('/login', function () {
 
 Route::get('/dashboard', [DashboardController::class, 'index']);
 
+Route::get('/ai-assistant', function () {
+    return view('ai.assistant');
+});
+
 Route::get('/profile', function () {
     return view('profile');
 });

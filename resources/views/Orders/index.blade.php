@@ -77,21 +77,36 @@
     </form>
 </div>
 
-<div class="flex flex-col md:flex-row items-center gap-4 mb-6 bg-white p-4 rounded shadow">
-    <div class="relative w-full md:w-1/2">
-        <span class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
-            <i data-lucide="search" class="w-4 h-4"></i>
-        </span>
-        <input type="text" id="search" placeholder="رقم الطلب أو اسم العميل..."
-               class="w-full rounded border px-10 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+<div class="mb-6 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center">
+        <div class="relative w-full md:flex-1">
+            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-400">
+                <i data-lucide="search" class="h-4 w-4"></i>
+            </span>
+            <input type="text" id="search" placeholder="ابحث باستخدام اللغة الطبيعية... مثال: الطلبات قيد التنفيذ أو الطلبات الخاصة بأحمد"
+                   class="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-24 pr-10 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-4 focus:ring-indigo-100">
+            <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+                <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 ring-1 ring-indigo-100">
+                    <i data-lucide="sparkles" class="h-3 w-3"></i>
+                    AI
+                </span>
+            </span>
+        </div>
+
+        <select id="status-filter" class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 md:w-56">
+            <option value="">كل الحالات</option>
+            <option value="قيد التنفيذ">قيد التنفيذ</option>
+            <option value="تم التوصيل">تم التوصيل</option>
+            <option value="ملغي">ملغي</option>
+        </select>
     </div>
 
-    <select id="status-filter" class="w-full md:w-1/4 rounded border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400">
-        <option value="">كل الحالات</option>
-        <option value="قيد التنفيذ">قيد التنفيذ</option>
-        <option value="تم التوصيل">تم التوصيل</option>
-        <option value="ملغي">ملغي</option>
-    </select>
+    <div class="mt-3 flex flex-wrap gap-2">
+        <button type="button" class="order-search-chip" data-search="الطلبات قيد التنفيذ">قيد التنفيذ</button>
+        <button type="button" class="order-search-chip" data-search="الطلبات التي تم إنشاؤها اليوم">طلبات اليوم</button>
+        <button type="button" class="order-search-chip" data-search="آخر 10 طلبات">آخر 10 طلبات</button>
+        <button type="button" class="order-search-chip" data-search="الطلبات الخاصة بأحمد">طلبات أحمد</button>
+    </div>
 </div>
 
 
@@ -126,6 +141,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.getElementById("search").addEventListener("input", () => loadOrders(1));
 document.getElementById("status-filter").addEventListener("change", () => loadOrders(1));
+document.querySelectorAll(".order-search-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+        document.getElementById("search").value = chip.dataset.search;
+        loadOrders(1);
+    });
+});
 
 function getStatusClass(status) {
     switch (status) {

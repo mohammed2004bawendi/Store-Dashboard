@@ -1,3 +1,71 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    * {
+        letter-spacing: 0;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+@layer components {
+    .app-icon-button {
+        @apply inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-300;
+    }
+
+    .sidebar-collapsed #app-sidebar {
+        @apply w-20;
+    }
+
+    .sidebar-collapsed .nav-label {
+        @apply hidden;
+    }
+
+    .sidebar-collapsed #sidebarNav .nav-item {
+        @apply justify-center px-2;
+    }
+
+    .stat-card {
+        @apply flex items-center gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md;
+    }
+
+    .stat-icon {
+        @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl;
+    }
+
+    .chart-panel {
+        @apply rounded-3xl border border-slate-200 bg-white p-5 shadow-sm;
+    }
+
+    .prompt-chip {
+        @apply rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-300;
+    }
+
+    .order-search-chip {
+        @apply rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-200;
+    }
+
+    .assistant-surface {
+        @apply overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm;
+    }
+
+    .assistant-bubble {
+        animation: fade-in-up 180ms ease-out both;
+    }
+}
+
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

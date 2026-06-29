@@ -2,6 +2,7 @@
 
 namespace App\Domain\Orders\Actions;
 
+use App\Ai\OrderSmartSearch;
 use App\Domain\Orders\Data\OrderFiltersData;
 use App\Models\Order;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -10,13 +11,22 @@ use Illuminate\Support\Facades\Cache;
 
 class ListOrdersAction
 {
+    public function __construct(
+        private readonly OrderSmartSearch $smartSearch,
+    ) {}
+
     public function execute(OrderFiltersData $filters): LengthAwarePaginator
     {
         return Cache::remember($filters->cacheKey(), 60, function () use ($filters) {
-            return $this->applyFilters(
-                Order::query()->with(['customer', 'products'])->whereHas('customer'),
-                $filters,
-            )->paginate();
+            $result = $this->smartSearch->apply(
+                $this->applyFilters(
+                    Order::query()->with(['customer', 'products'])->whereHas('customer'),
+                    $filters,
+                ),
+                $filters->search,
+            );
+
+            return $result['query']->paginate($result['limit']);
         });
     }
 
@@ -30,13 +40,11 @@ class ListOrdersAction
 
     private function applyFilters(Builder $query, OrderFiltersData $filters): Builder
     {
-        return $query
+        $query
             ->when($filters->status, fn (Builder $query, string $status) => $query->where('status', $status))
             ->when($filters->minTotalPrice, fn (Builder $query, int|string $min) => $query->where('total_price', '>=', $min))
-            ->when($filters->maxTotalPrice, fn (Builder $query, int|string $max) => $query->where('total_price', '<=', $max))
-            ->when($filters->search, function (Builder $query, int|string $search) {
-                $query->where('id', $search)
-                    ->orWhereHas('customer', fn (Builder $query) => $query->where('name', 'like', "%{$search}%"));
-            });
+            ->when($filters->maxTotalPrice, fn (Builder $query, int|string $max) => $query->where('total_price', '<=', $max));
+
+        return $query;
     }
 }
