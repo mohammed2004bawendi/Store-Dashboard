@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\OrderController;
+use App\Admin\Dashboard\Controllers\DashboardController;
+use App\Admin\Orders\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {

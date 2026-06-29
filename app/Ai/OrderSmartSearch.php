@@ -168,10 +168,7 @@ class OrderSmartSearch
         }
 
         if (($filters['created_today'] ?? false) === true) {
-            $query->whereBetween('created_at', [
-                Carbon::today(),
-                Carbon::today()->endOfDay(),
-            ]);
+            $query->whereDate('created_at', Carbon::today()->toDateString());
             $applied = true;
         }
 

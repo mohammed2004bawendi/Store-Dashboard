@@ -104,8 +104,8 @@ it('filters by product name from structured output', function () {
 });
 
 it('filters today orders from structured output', function () {
-    $today = createSearchOrder('Today Customer', 'قيد التنفيذ', 100, now()->subHour()->toDateTimeString());
-    createSearchOrder('Yesterday Customer', 'قيد التنفيذ', 100, now()->subDay()->toDateTimeString());
+    $today = createSearchOrder('Today Customer', 'قيد التنفيذ', 100, now()->setTime(12, 0)->toDateTimeString());
+    createSearchOrder('Yesterday Customer', 'قيد التنفيذ', 100, now()->subDay()->setTime(12, 0)->toDateTimeString());
 
     OrderSearchAgent::fake([
         ['created_today' => true],

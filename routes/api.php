@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\AiAssistantController;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\QuantityReminderController;
+use App\Admin\Ai\Controllers\AiAssistantController;
+use App\Admin\Auth\Controllers\AuthController;
+use App\Admin\Customers\Controllers\CustomerController;
+use App\Admin\Dashboard\Controllers\DashboardController;
+use App\Admin\Notifications\Controllers\QuantityReminderController;
+use App\Admin\Orders\Controllers\OrderController;
+use App\Admin\Products\Controllers\ProductController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
